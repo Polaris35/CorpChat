@@ -1,0 +1,6 @@
+module MessengerForm
+depends MessageInputField 1.0
+depends IconClickHighlight 1.0
+depends RoundImage 1.0
+depends MessagesView 1.0
+MessengerForm 1.0 MessengerForm.qml

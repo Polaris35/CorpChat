@@ -1,0 +1,3 @@
+module MessagesView
+MessagesDelegate 1.0 MessagesDelegate.qml
+MessagesView 1.0 MessagesView.qml

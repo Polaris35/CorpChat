@@ -1,0 +1,2 @@
+module GlobalQmlSettings
+singleton GlobalSettings 1.0 GlobalSettings.qml
