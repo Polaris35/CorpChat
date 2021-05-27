@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QDir>
 #include <QTime>
+#include<QFileInfo>
 
 #include <limits>
 
@@ -86,9 +87,9 @@ void Client::sendImage(QString url)
     QString delim = net::Package::delimiter();
     QString currentTime = QDateTime::currentDateTime().toString();
 
-    QString fixedUrl = url.remove(0,8);
+    QString fixedUrl = url.remove(0,8); //remove "file:///"
 
-    QFile img(fixedUrl);
+    QFileInfo img(fixedUrl);
 
     QString FileName = img.fileName();
 
@@ -107,7 +108,6 @@ void Client::sendImage(QString url)
     //    QByteArray imageBase64 = imgRaw.toBase64();
 
     QByteArray imageBase64 = ImageSerializer::toBase64(url);
-
     qDebug()<< Q_FUNC_INFO << "image size " << imageBase64.size();
 
     if(imageBase64.size() > std::numeric_limits<quint64>::max())
@@ -164,12 +164,18 @@ void Client::loadMessageHistory(const QStringList &json)
         return;
     }
     if(json.isEmpty()) {
-        qWarning() << Q_FUNC_INFO << "Array is empty!";
+        qWarning() << Q_FUNC_INFO << "Array of message history is empty!";
     }
     m_messagesModel->reset();
     foreach(QString val, json)
     {
-        newMessage(val);
+        QStringList list = val.split("###");
+        if(list.first() == "text")
+            newMessage(list.last());
+        else if(list.first() == "image")
+            newImage(list.last());
+        else if(list.first() == "document")
+            newDocument(list.last());
     }
 
 }
@@ -189,7 +195,6 @@ void Client::addContact(const QString &contactData)
             + item.nickname + "_avatar.png";
     item.imageUrl = path;
 
-    QImage avatar;
     QByteArray imgRaw = data.last().toLocal8Bit();
 
     qDebug() << data;
@@ -224,7 +229,7 @@ void Client::newMessage(QString sender, QString time, QString text)
 
 void Client::newImage(QString raw)
 {
-    //nick$filename$time$image
+    //nick$$$filename$$$time$$$image
     QStringList data = raw.split(net::Package::delimiter());
     QString sender = data.at(0);
     QString filename = data.at(1);
@@ -259,7 +264,7 @@ void Client::newImage(QString sender, QString filename, QString time, QByteArray
 
 void Client::newMessage(QString raw)
 {
-    //"nickname$time$text$
+    //"nickname$$$time$$$text$$$
     QStringList data = raw.split(net::Package::delimiter());
     QString sender = data.at(0);
     QString time = data.at(1);
@@ -272,6 +277,11 @@ void Client::newDocument(QString sender, QByteArray base64)
 {
     Q_UNUSED(sender)
     Q_UNUSED(base64)
+}
+
+void Client::newDocument(QString raw)
+{
+    Q_UNUSED(raw)
 }
 
 
@@ -403,10 +413,10 @@ void Client::packageRecieved(net::Package package)
         addContact(data);
         break;
     case net::Package::TEXT_MESSAGE: //Текстовое сообщение
-        newMessage(package.sender() + net::Package::delimiter() + data); //никнейм$время$текст
+        newMessage(package.sender() + net::Package::delimiter() + data); //никнейм$$$время$$$текст
         break;
     case net::Package::IMAGE:
-        newImage(package.sender() + net::Package::delimiter() + data); //nick$filename$time$image
+        newImage(package.sender() + net::Package::delimiter() + data); //nick$$$filename$$$time$$$image
         break;
     case net::Package::DOCUMENT:
         newDocument(package.sender(), data);

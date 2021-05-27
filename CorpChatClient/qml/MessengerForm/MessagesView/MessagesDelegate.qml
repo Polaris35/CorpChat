@@ -14,8 +14,8 @@ RowLayout {
     property string username
     property string time
     property string message
-    property url image
-    property url document
+    property string image
+    property string document
 
     spacing: 10
     RoundImage {
@@ -55,15 +55,17 @@ RowLayout {
             text: message
             visible: true
             wrapMode: Text.WordWrap
-            Layout.preferredHeight: contentHeight
+            Layout.preferredHeight: 200
             Layout.preferredWidth: rowLayout.width - icon.width
             Layout.topMargin: senderNickname.contentHeight
         }
-        //            Image {
-        //                id: messageImage
-        //                source: image
-        //                visible: true
-        //            }
-
+        Image {
+            id: messageImage
+            source: image
+            visible: true
+            Layout.preferredHeight: 200
+            Layout.preferredWidth: rowLayout.width - icon.width
+            Layout.topMargin: senderNickname.contentHeight
+        }
     }
 }

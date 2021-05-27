@@ -1,4 +1,4 @@
-QT += network sql
+QT += network sql core
 
 CONFIG += c++17 console
 CONFIG -= app_bundle

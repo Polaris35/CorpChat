@@ -72,6 +72,7 @@ private:
     void newMessage(QString sender, QString time,QString text);
     void newMessage(QString raw);
     void newDocument(QString sender, QByteArray base64);
+    void newDocument(QString raw);
     void newImage(QString raw);
     void newImage(QString sender, QString filename, QString time, QByteArray base64);
 

@@ -2,7 +2,12 @@
 #include <QDebug>
 #include <QSqlError>
 #include <QDateTime>
+#include <QUuid>
+#include<QFile>
+#include<QDir>
+#include<QImage>
 #include "include/package.h"
+#include "include/imageserializer.h"
 
 DBFacade::DBFacade(QObject *parent) : QObject(parent)
 {
@@ -70,8 +75,8 @@ void DBFacade::addMessage(QString sender, QString receiver, QString messageText)
 
     query.prepare("SELECT id "
                   "FROM conversations "
-                  "WHERE (title = CONCAT(:name1, \"$\", :name2)) "
-                  "OR (title = CONCAT(:name2, \"$\", :name1)) ");
+                  "WHERE (title = CONCAT(:name1, \"$$$\", :name2)) "
+                  "OR (title = CONCAT(:name2, \"$$$\", :name1)) ");
     query.bindValue(":name1", sender);
     query.bindValue(":name2", receiver);
     int conversationId;
@@ -121,19 +126,19 @@ void DBFacade::addMessage(QString sender, QString receiver, QString messageText)
 QStringList DBFacade::messageHistory(QString user1, QString user2)
 {
     QSqlQuery query(*m_db);
-//    qDebug() << "Gettin meesageHistroy for" << user1 << user2;
-//    query.prepare(
-//                "SELECT u.nickname, m.created_at, m.message "
-//                "FROM messages m "
-//                "INNER JOIN useres u ON m.id_sender = u.id "
-//                "INNER JOIN participants p ON u.id = p.id_useres "
-//                "INNER JOIN conversations c ON p.id_conversation = c.id "
-//                "WHERE ( (c.title LIKE CONCAT(:sender, '$', :receiver)) "
-//                "OR (c.title LIKE CONCAT(:receiver, '$', :sender))) "
-//                "ORDER BY m.created_at DESC"
-//                );
+    //    qDebug() << "Gettin meesageHistroy for" << user1 << user2;
+    //    query.prepare(
+    //                "SELECT u.nickname, m.created_at, m.message "
+    //                "FROM messages m "
+    //                "INNER JOIN useres u ON m.id_sender = u.id "
+    //                "INNER JOIN participants p ON u.id = p.id_useres "
+    //                "INNER JOIN conversations c ON p.id_conversation = c.id "
+    //                "WHERE ( (c.title LIKE CONCAT(:sender, '$$$', :receiver)) "
+    //                "OR (c.title LIKE CONCAT(:receiver, '$$$', :sender))) "
+    //                "ORDER BY m.created_at DESC"
+    //                );
     query.prepare(
-                "SELECT u.nickname, m.created_at, m.message "
+                "SELECT u.nickname, m.created_at, m.message, m.message_type,m.id "
                 "FROM messages m "
                 "INNER JOIN useres u ON m.id_sender = u.id "
                 "WHERE (m.id_conversation IN ( "
@@ -158,17 +163,70 @@ QStringList DBFacade::messageHistory(QString user1, QString user2)
     }
     QStringList messages;
     qDebug() << query.size();
+    QSqlQuery secondq;
+    int id;
+    secondq.prepare("SELECT COUNT(*), uuid FROM attachments WHERE id_message LIKE :id");
+
     while(query.next()) {
-        messages.append(
-                    query.value(0).toString()                       + net::Package::delimiter() +
-                    query.value(1).toDateTime().toString()          + net::Package::delimiter() +
-                    query.value(2).toString()
-                    );
+        if(query.value(3).toString() == "text")
+        {
+            messages.append( //u.nickname, m.created_at, m.message
+                             "text###"                                       + net::Package::delimiter() +
+                             query.value(0).toString()                       + net::Package::delimiter() +
+                             query.value(1).toDateTime().toString()          + net::Package::delimiter() +
+                             query.value(2).toString()                       + net::Package::delimiter());
+        }
+        else if(query.value(3).toString() == "image")
+        {
+            id = query.value(4).toInt();
+            secondq.bindValue(":id",id);
+            if(!secondq.exec()){
+                qDebug() << Q_FUNC_INFO;
+                qFatal("can't recieve an image path!!!");
+            }
+            QString path;
+            if(secondq.value(0).toInt() != 0)
+                path = secondq.value(0).toString();
+            else
+            {
+                qDebug() << Q_FUNC_INFO;
+                qFatal("not found image path!!!");
+            }
+            messages.append(
+                        "images###"                                     + net::Package::delimiter() +
+                        query.value(0).toString()                       + net::Package::delimiter() +
+                        query.value(1).toDateTime().toString()          + net::Package::delimiter() +
+                        ImageSerializer::toBase64(path)                 + net::Package::delimiter());
+        }
+        else if(query.value(3).toString() == "document")
+        {
+            id = query.value(4).toInt();
+            secondq.bindValue(":id",id);
+            if(!secondq.exec()){
+                qDebug() << Q_FUNC_INFO;
+                qFatal("can't recieve an document path!!!");
+            }
+            QString path;
+            if(secondq.value(0).toInt() != 0)
+                path = secondq.value(0).toString();
+            else
+            {
+                qDebug() << Q_FUNC_INFO;
+                qFatal("not found document path!!!");
+            }
+            messages.append(
+                        "document###"                                   + net::Package::delimiter() +
+                        query.value(0).toString()                       + net::Package::delimiter() +
+                        query.value(1).toDateTime().toString()          + net::Package::delimiter() +
+                        ImageSerializer::toBase64(path)                 + net::Package::delimiter());
+        }
     }
-    qDebug() << messages.size();
+    qDebug() << "Message history has size:" << messages.size();
+
     query.finish();
+
     query.prepare(
-                  "UPDATE messages m "
+                "UPDATE messages m "
                   "INNER JOIN conversations c ON m.id_conversation = c.id "
                   "INNER JOIN participants p ON c.id = p.id_conversation "
                   "INNER JOIN useres u ON p.id_useres = u.id "
@@ -200,15 +258,15 @@ bool DBFacade::newConversation(const QString &user1, const QString &user2)
 {
     QSqlQuery query(*m_db);
     query.prepare("INSERT INTO conversations(title, id_creator) "
-                  "SELECT CONCAT(:user1, \"$\", :user2), :null "
+                  "SELECT CONCAT(:user1, \"$$$\", :user2), :null "
                   "WHERE"
                   "("
                   "SELECT COUNT(*) "
                   "FROM conversations "
                   "WHERE "
-                  "(title = CONCAT(:user1, \"$\", :user2)) "
+                  "(title = CONCAT(:user1, \"$$$\", :user2)) "
                   "OR "
-                  "(title = CONCAT(:user2, \"$\", :user1))"
+                  "(title = CONCAT(:user2, \"$$$\", :user1))"
                   ") = 0 "
                   "AND "
                   "(:user1 IN (SELECT nickname FROM useres)) "
@@ -282,20 +340,21 @@ void DBFacade::newMessage(const QString &sender, const QStringList &recievers, c
 {
 
     QSqlQuery query(*m_db);
-    query.prepare("INSERT INTO messages (id_sender, id_conversation, message, created_at, deleted_at) "
-                  "SELECT u.id, c.id, :text, :datetime, :deletedat "
+    query.prepare("INSERT INTO messages (id_sender, id_conversation, message,message_type, created_at, deleted_at) "
+                  "SELECT u.id, c.id, :text,:type , :datetime, :deletedat "
                   "FROM useres u "
                   "INNER JOIN participants p ON u.id = p.id_useres "
                   "INNER JOIN conversations c ON p.id_conversation = c.id "
                   "WHERE (u.nickname = :sender) "
                   "AND "
                   "( "
-                  "(c.title LIKE CONCAT(:receiver, '$', :sender)) "
+                  "(c.title LIKE CONCAT(:receiver, '$$$', :sender)) "
                   "OR "
-                  "(c.title LIKE CONCAT(:sender, '$', :receiver)) "
+                  "(c.title LIKE CONCAT(:sender, '$$$', :receiver)) "
                   ") "
                   );
     query.bindValue(":text", text);
+    query.bindValue(":type","text");
     query.bindValue(":datetime", QDateTime::fromString(dateTime));
     query.bindValue(":deletedat", QVariant());
     query.bindValue(":sender", sender);
@@ -307,16 +366,62 @@ void DBFacade::newMessage(const QString &sender, const QStringList &recievers, c
     }
 }
 
+void DBFacade::newImage(const QString &sender, const QStringList &recievers,
+                        const QString& filename, const QByteArray &imageb, const QString &dateTime)
+{
+    QSqlQuery query(*m_db);
+    query.prepare("INSERT INTO messages (id_sender, id_conversation, message, message_type, created_at, deleted_at) "
+                  "SELECT u.id, c.id, :text,:type , :datetime, :deletedat "
+                  "FROM useres u "
+                  "INNER JOIN participants p ON u.id = p.id_useres "
+                  "INNER JOIN conversations c ON p.id_conversation = c.id "
+                  "WHERE (u.nickname = :sender) "
+                  "AND "
+                  "( "
+                  "(c.title LIKE CONCAT(:receiver, '$$$', :sender)) "
+                  "OR "
+                  "(c.title LIKE CONCAT(:sender, '$$$', :receiver)) "
+                  ") "
+                  );
+    query.bindValue(":text", " ");
+    query.bindValue(":type","image");
+    query.bindValue(":datetime", QDateTime::fromString(dateTime));
+    query.bindValue(":deletedat", QVariant());
+    query.bindValue(":sender", sender);
+    query.bindValue(":receiver", recievers.first());
+
+
+    query.finish();
+
+    QVariant id = query.lastInsertId();
+
+    QString path = QDir::currentPath() + QDir::separator() +
+            "images" + QDir::separator() +
+            QUuid::createUuid().toString() +filename;
+
+    ImageSerializer::fromBase64(imageb,path);
+
+    query.prepare("INSERT INTO attachments (uuid, id_message) VALUES(:uuid, :id);");
+
+    query.bindValue(":uuid", path);
+    query.bindValue(":id",id);
+
+    bool ok = query.exec();
+    if(!ok) {
+        qWarning() << Q_FUNC_INFO << query.lastError().text();
+    }
+}
+
 QHash<QString, QString> DBFacade::contactsList(QString user)
 {
     QSqlQuery query(*m_db);
-//    QString queryString =
-//            "SELECT u.nickname, a.url "
-//            "FROM useres u "
-//            "INNER JOIN attachments a ON a.id = u.id_pictures "
-//            "INNER JOIN participants p ON u.id = p.id_useres "
-//            "INNER JOIN conversations c ON p.id_conversation = c.id "
-//            "WHERE u.nickname != :username";
+    //    QString queryString =
+    //            "SELECT u.nickname, a.url "
+    //            "FROM useres u "
+    //            "INNER JOIN attachments a ON a.id = u.id_pictures "
+    //            "INNER JOIN participants p ON u.id = p.id_useres "
+    //            "INNER JOIN conversations c ON p.id_conversation = c.id "
+    //            "WHERE u.nickname != :username";
     QString queryString =
             "SELECT DISTINCT u.nickname, a.url, HasUnreadMessages(:username, u.nickname) "
             "FROM useres u "

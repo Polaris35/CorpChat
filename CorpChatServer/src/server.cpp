@@ -56,7 +56,7 @@ void Server::newPackage(const net::Package &package)
         sendMessage(package);
         break;
     case net::Package::IMAGE: // Send to user images
-        sendMessage(package);
+        sendImage(package);
         break;
     case net::Package::DOCUMENT:
 
@@ -67,11 +67,6 @@ void Server::newPackage(const net::Package &package)
 void Server::registerUser(net::Package package, net::Connection *connection)
 {
     qInfo() << Q_FUNC_INFO;
-    //QList<QByteArray> data = package.data().toByteArray().split('$');
-//    if(data.size() < 2) {
-//        qDebug() << "Can't split data";
-//        return;
-//    }
     QString username = package.sender();
     QString password = package.destinations().toVector().first();
     qDebug() << "PW: " << password;
@@ -170,6 +165,24 @@ void Server::sendMessage(const net::Package &package)
     QString dateTime = data.first();
     QString text = data.last();
     m_database->newMessage(sender,destinations,text,dateTime);
+
+    foreach(QString dest, destinations) {
+        if(m_clients.contains(dest)) {
+            m_clients.value(dest)->sendPackage(package);
+        }
+    }
+}
+
+void Server::sendImage(const net::Package &package)
+{
+    QString sender = package.sender();
+    QStringList destinations = package.destinations();
+    QStringList data = package.data().toString().split(net::Package::delimiter());
+    QString filename = data.at(0);
+    qDebug() << Q_FUNC_INFO << "filename is:" << filename;
+    QString dateTime = data.at(1);
+    QByteArray image = data.at(2).toUtf8();
+    m_database->newImage(sender,destinations,filename,image,dateTime);
 
     foreach(QString dest, destinations) {
         if(m_clients.contains(dest)) {

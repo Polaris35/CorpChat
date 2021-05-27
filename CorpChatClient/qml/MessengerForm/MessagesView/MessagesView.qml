@@ -36,6 +36,7 @@ ListView {
         //"qrc:/qml/Images/Default"//model.avatar
         ListView.onAdd: {
             messagesView.positionViewAtBeginning()
+            console.log("Added 123");
             //            if (model.role != "" && model.image == "" && model.document == "") {
             //                messageText.visible = true
             //                console.log("text message output!!")

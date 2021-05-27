@@ -7,35 +7,31 @@ import QtGraphicalEffects 1.0
 import MessengerForm.RoundImage 1.0
 import GlobalQmlSettings 1.0
 
-Rectangle
-{
+Rectangle {
     id: root
     property string avatarSource
     property string username
 
     height: 50
-    signal click()
+    signal click
     function notify() {
         notification.visible = true
         console.log("Should be visible")
     }
 
     color: Material.backgroundColor
-    Rectangle
-    {
+    Rectangle {
         id: delimiter
         height: 1
         width: rowLayout.width
         color: Qt.lighter(Material.backgroundColor)
         anchors.top: rowLayout.bottom
-//        anchors.bottomMargin: 10
+        //        anchors.bottomMargin: 10
     }
-    RowLayout
-    {
+    RowLayout {
         id: rowLayout
         anchors.fill: parent
-        RoundImage
-        {
+        RoundImage {
             id: avatar
             source: "file:///" + avatarSource
             Layout.preferredWidth: 40
@@ -46,16 +42,14 @@ Rectangle
                 console.log("Avatar source = " + avatarSource)
             }
         }
-        Label
-        {
+        Label {
             id: usernameLabel
             text: username
             Layout.preferredHeight: contentHeight
-//            Layout.preferredWidth: rowLayout.width - avatar.width
+            //            Layout.preferredWidth: rowLayout.width - avatar.width
             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-
         }
-        Rectangle{
+        Rectangle {
             id: notification
             color: Material.color(Material.Orange)
             radius: 10
@@ -66,8 +60,7 @@ Rectangle
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
         }
     }
-    MouseArea
-    {
+    MouseArea {
         id: area
         anchors.fill: parent
         z: 5

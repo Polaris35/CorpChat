@@ -54,7 +54,7 @@ void Package::setJsonArr(const QJsonArray &arr)
 
 QString Package::delimiter()
 {
-    return "$";
+    return "$$$";
 }
 
 }

@@ -25,6 +25,11 @@ public:
                     const QStringList &recievers,
                     const QString& text,
                     const QString &dateTime);
+    void newImage(const QString &sender,
+                 const QStringList &recievers,
+                  const QString& filename,
+                 const QByteArray& image,
+                 const QString &dateTime);
 
 
     QHash<QString, QString> contactsList(QString user);
@@ -34,5 +39,6 @@ signals:
 private:
     QSqlDatabase *m_db;
 };
+
 
 #endif // DBFACADE_H
