@@ -3,17 +3,25 @@
 
 #include <QObject>
 struct Message
-{
+{    
     QString sender;
     QString data;
     QString timeStamp;
-    QString imageurl;
-    QString documenturl;
+    QString type;
+    //friend QDebug operator <<(QDebug stream, const Message& circle);
+
 };
+
+//inline QDebug operator <<(QDebug stream, const Message& message)
+//{
+//    stream << "sender: " << message.sender << "\n";
+//    return stream;
+//}
 
 class MessagesList : public QObject
 {
     Q_OBJECT
+
 public:
     explicit MessagesList(QObject *parent = nullptr);
 

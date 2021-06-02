@@ -31,7 +31,7 @@ Rectangle {
     RowLayout {
         id: rowLayout
         anchors.fill: parent
-        RoundImage {
+        Image {
             id: avatar
             source: "file:///" + avatarSource
             Layout.preferredWidth: 40

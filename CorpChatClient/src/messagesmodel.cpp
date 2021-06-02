@@ -38,13 +38,9 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
     case TimeRole:
         return QVariant(item.timeStamp);
 
-    case ImageRole:
-        return QVariant(item.imageurl);
-
-    case DocumentRole:
-        return QVariant(item.documenturl);
+    case MessageType:
+        return QVariant(item.type);
     }
-
 
     return QVariant();
 }
@@ -66,13 +62,10 @@ bool MessagesModel::setData(const QModelIndex &index, const QVariant &value, int
         item.data = value.toString();
         break;
     case TimeRole:
-        item.timeStamp = value.toString();
+        item.timeStamp = value.toString();        
         break;
-    case ImageRole:
-        item.imageurl = value.toString();
-        break;
-    case DocumentRole:
-        item.documenturl = value.toString();
+    case MessageType:
+        item.type = value.toString();
         break;
     }
 
@@ -119,8 +112,7 @@ QHash<int, QByteArray> MessagesModel::roleNames() const
     roles[SenderRole] = "nickname";
     roles[TextRole] = "text";
     roles[TimeRole] = "timeStamp";
-    roles[ImageRole] = "image";
-    roles[DocumentRole] = "document";
+    roles[MessageType] = "type";
 
     return roles;
 }
@@ -186,8 +178,7 @@ void MessagesModel::append(const Message &item)
     ok |= setData(this->index(0), QVariant(item.sender), Roles::SenderRole);
     ok |= setData(this->index(0), QVariant(item.data), Roles::TextRole);
     ok |= setData(this->index(0), QVariant(item.timeStamp), Roles::TimeRole);
-    ok |= setData(this->index(0), QVariant(item.imageurl), Roles::ImageRole);
-    ok |= setData(this->index(0), QVariant(item.documenturl), Roles::DocumentRole);
+    ok |= setData(this->index(0), QVariant(item.type), Roles::MessageType);
 
     if(!ok)
         qDebug() << "Set data not working!";

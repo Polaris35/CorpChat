@@ -165,60 +165,72 @@ QStringList DBFacade::messageHistory(QString user1, QString user2)
     qDebug() << query.size();
     QSqlQuery secondq;
     int id;
-    secondq.prepare("SELECT COUNT(*), uuid FROM attachments WHERE id_message LIKE :id");
+    secondq.prepare("SELECT COUNT(*), uuid FROM attachments WHERE id_message = :id");
 
     while(query.next()) {
         if(query.value(3).toString() == "text")
         {
             messages.append( //u.nickname, m.created_at, m.message
-                             "text###"                                       + net::Package::delimiter() +
+                             "text###"                                       +
                              query.value(0).toString()                       + net::Package::delimiter() +
                              query.value(1).toDateTime().toString()          + net::Package::delimiter() +
-                             query.value(2).toString()                       + net::Package::delimiter());
+                             query.value(2).toString());
         }
         else if(query.value(3).toString() == "image")
         {
             id = query.value(4).toInt();
             secondq.bindValue(":id",id);
             if(!secondq.exec()){
-                qDebug() << Q_FUNC_INFO;
-                qFatal("can't recieve an image path!!!");
+                qWarning() << Q_FUNC_INFO
+                << "can't recieve an image path!!!"
+                << secondq.lastError().text();
             }
+            secondq.next();
             QString path;
-            if(secondq.value(0).toInt() != 0)
-                path = secondq.value(0).toString();
+            if(secondq.value(0).toInt() != 0){
+                path = secondq.value(1).toString();
+                qDebug() << Q_FUNC_INFO << path;
+            }
             else
             {
                 qDebug() << Q_FUNC_INFO;
                 qFatal("not found image path!!!");
+
             }
             messages.append(
-                        "images###"                                     + net::Package::delimiter() +
+                        "image###"                                      +
                         query.value(0).toString()                       + net::Package::delimiter() +
+                        QFileInfo(path).fileName()                      + net::Package::delimiter() +
                         query.value(1).toDateTime().toString()          + net::Package::delimiter() +
-                        ImageSerializer::toBase64(path)                 + net::Package::delimiter());
+                        ImageSerializer::toBase64(path));
         }
         else if(query.value(3).toString() == "document")
         {
             id = query.value(4).toInt();
             secondq.bindValue(":id",id);
             if(!secondq.exec()){
-                qDebug() << Q_FUNC_INFO;
-                qFatal("can't recieve an document path!!!");
+                qWarning() << Q_FUNC_INFO
+                << "can't recieve an document path!!!"
+                << secondq.lastError().text();
             }
+            secondq.next();
             QString path;
-            if(secondq.value(0).toInt() != 0)
-                path = secondq.value(0).toString();
+            if(secondq.value(0).toInt() != 0){
+                path = secondq.value(1).toString();
+                qDebug() << Q_FUNC_INFO << path;
+            }
             else
             {
                 qDebug() << Q_FUNC_INFO;
                 qFatal("not found document path!!!");
+
             }
             messages.append(
-                        "document###"                                   + net::Package::delimiter() +
+                        "document###"                                   +
                         query.value(0).toString()                       + net::Package::delimiter() +
+                        QFileInfo(path).fileName()                      + net::Package::delimiter() +
                         query.value(1).toDateTime().toString()          + net::Package::delimiter() +
-                        ImageSerializer::toBase64(path)                 + net::Package::delimiter());
+                        ImageSerializer::toBase64(path));
         }
     }
     qDebug() << "Message history has size:" << messages.size();
@@ -370,8 +382,8 @@ void DBFacade::newImage(const QString &sender, const QStringList &recievers,
                         const QString& filename, const QByteArray &imageb, const QString &dateTime)
 {
     QSqlQuery query(*m_db);
-    query.prepare("INSERT INTO messages (id_sender, id_conversation, message, message_type, created_at, deleted_at) "
-                  "SELECT u.id, c.id, :text,:type , :datetime, :deletedat "
+    query.prepare("INSERT INTO messages (id_sender, id_conversation, message_type, created_at, deleted_at) "
+                  "SELECT u.id, c.id,:type , :datetime, :deletedat "
                   "FROM useres u "
                   "INNER JOIN participants p ON u.id = p.id_useres "
                   "INNER JOIN conversations c ON p.id_conversation = c.id "
@@ -383,30 +395,35 @@ void DBFacade::newImage(const QString &sender, const QStringList &recievers,
                   "(c.title LIKE CONCAT(:sender, '$$$', :receiver)) "
                   ") "
                   );
-    query.bindValue(":text", " ");
     query.bindValue(":type","image");
     query.bindValue(":datetime", QDateTime::fromString(dateTime));
     query.bindValue(":deletedat", QVariant());
     query.bindValue(":sender", sender);
     query.bindValue(":receiver", recievers.first());
-
-
-    query.finish();
+    bool ok = query.exec();
+    if(!ok) {
+        qWarning() << Q_FUNC_INFO << query.lastError().text();
+    }
 
     QVariant id = query.lastInsertId();
 
-    QString path = QDir::currentPath() + QDir::separator() +
-            "images" + QDir::separator() +
-            QUuid::createUuid().toString() +filename;
+    query.finish();
+
+
+
+    qDebug() << "image in message column  has id:" << id.toInt();
+
+    QString path = QDir::currentPath() + QDir::separator() + "images" + QDir::separator() +
+            QUuid::createUuid().toString().remove('{').remove('}') + "_" + filename;
 
     ImageSerializer::fromBase64(imageb,path);
 
     query.prepare("INSERT INTO attachments (uuid, id_message) VALUES(:uuid, :id);");
 
     query.bindValue(":uuid", path);
-    query.bindValue(":id",id);
+    query.bindValue(":id",id.toInt());
 
-    bool ok = query.exec();
+    ok = query.exec();
     if(!ok) {
         qWarning() << Q_FUNC_INFO << query.lastError().text();
     }

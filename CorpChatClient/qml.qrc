@@ -20,7 +20,6 @@
         <file>qml/MessengerForm/ContactsView/ContactsDelegate.qml</file>
         <file>qml/MessengerForm/ContactsView/ContactsView.qml</file>
         <file>qml/MessengerForm/ContactsView/qmldir</file>
-        <file>qml/MessengerForm/MessagesView/MessagesDelegate.qml</file>
         <file>qml/MessengerForm/MessagesView/MessagesView.qml</file>
         <file>qml/MessengerForm/MessagesView/qmldir</file>
         <file>qml/MessengerForm/qmldir</file>
@@ -48,5 +47,7 @@
         <file>qml/icons/fullscreen-white.svg</file>
         <file>qml/icons/maximize-white.svg</file>
         <file>qml/icons/minimize-white.svg</file>
+        <file>qml/MessengerForm/MessagesView/MessagesDelegate.qml</file>
+        <file>qml/MessengerForm/MessagesView/ImageDelegate.qml</file>
     </qresource>
 </RCC>

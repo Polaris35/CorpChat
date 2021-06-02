@@ -61,7 +61,7 @@ ListView
             height: 50//contactsDelegate.height + 1
             color: "transparent"
             y: list.currentItem.y
-            border.width: 2
+            border.width: 1
             border.color: Material.color(Material.DeepOrange)
             z: 5
             Behavior on y

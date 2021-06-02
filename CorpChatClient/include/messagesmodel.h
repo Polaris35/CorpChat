@@ -8,15 +8,15 @@
 
 class MessagesModel : public QAbstractListModel
 {
-    Q_OBJECT
+    Q_OBJECT    
 public:
     enum Roles
     {
-        SenderRole = Qt::UserRole + 1,
+        MessageType = Qt::UserRole + 1,
+        SenderRole,
         TextRole,
-        TimeRole,
-        ImageRole,
-        DocumentRole
+        TimeRole
+
     };
     MessagesModel(QObject *parent = nullptr);
     MessagesList *list() const;

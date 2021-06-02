@@ -13,7 +13,8 @@ bool MessagesList::setItemAt(int index, const Message &item)
 
     const Message &oldItem = m_items.at(index);
 
-    if(item.sender == oldItem.sender && item.data == oldItem.data && item.timeStamp == oldItem.timeStamp)
+    if(item.sender == oldItem.sender && item.data == oldItem.data && item.timeStamp == oldItem.timeStamp
+            && item.type == oldItem.type)
         return false;
 
     m_items[index] = item;

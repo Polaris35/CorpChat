@@ -48,7 +48,7 @@ public slots:
     void sendDocument(QString url, QString reciver);
 
     void getContactsList();
-    void getMessageHistory(int idx);
+    void getMessageHistory();
 
     void loadContactsList(const QStringList &json);
     void loadMessageHistory(const QStringList &json);

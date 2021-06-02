@@ -137,9 +137,8 @@ void Client::getContactsList()
     m_connection.sendPackage(package);
 }
 
-void Client::getMessageHistory(int idx)
+void Client::getMessageHistory()
 {
-    Q_UNUSED(idx) //Лень менять
     static QString lastSelect;
     QString user = m_contactsModel->currentDialog();
     if(lastSelect == user) {
@@ -167,17 +166,24 @@ void Client::loadMessageHistory(const QStringList &json)
         qWarning() << Q_FUNC_INFO << "Array of message history is empty!";
     }
     m_messagesModel->reset();
+    qDebug() << json.size();
     foreach(QString val, json)
     {
         QStringList list = val.split("###");
-        if(list.first() == "text")
-            newMessage(list.last());
-        else if(list.first() == "image")
-            newImage(list.last());
-        else if(list.first() == "document")
-            newDocument(list.last());
+        qDebug() << "list size :" << list.size();
+        if(list.at(0) == "text"){
+            newMessage(list.at(1));
+            //qDebug() << list.at(1);
+        }
+        else if(list.at(0) == "image"){
+            newImage(list.at(1));
+            qDebug() << "new Image in message history!";
+        }
+        else if(list.at(0) == "document"){
+            newDocument(list.at(1));
+            qDebug() << "new Document in message history!";
+        }
     }
-
 }
 
 void Client::addContact(const QString &contactData)
@@ -186,7 +192,7 @@ void Client::addContact(const QString &contactData)
     QStringList data = contactData.split(net::Package::delimiter());
 
     item.nickname = data.first();
-    qDebug() << contactData;
+    //qDebug() << contactData;
     //QString path = *Globals::imagesPath + QDir::separator() + item.nickname + "_avatar.png";
     QString path = QDir::currentPath()
             //+ QDir::separator()
@@ -197,7 +203,7 @@ void Client::addContact(const QString &contactData)
 
     QByteArray imgRaw = data.last().toLocal8Bit();
 
-    qDebug() << data;
+    //qDebug() << data;
 
     ImageSerializer::fromBase64(imgRaw,path);
     contactsModel()->append(item);
@@ -216,8 +222,7 @@ void Client::newMessage(QString sender, QString time, QString text)
         item.sender = sender;
         item.data = text;
         item.timeStamp = time;
-        item.imageurl = "";
-        item.documenturl = "";
+        item.type = "text";
         m_messagesModel->append(item);
     }
     else
@@ -241,19 +246,21 @@ void Client::newImage(QString raw)
 
 
 void Client::newImage(QString sender, QString filename, QString time, QByteArray base64)
-{
-    qDebug() << Q_FUNC_INFO << "We recived an image Lebovski" << base64.size();
-
+{    
     if(sender == m_contactsModel->currentDialog() || sender == m_user->username())
     {
-        QString path = QDir::currentPath() + filename;
+//        QString path = QDir::currentPath() +
+//                QLatin1String("/images/") + filename;
+        QString path = QDir::currentPath()
+                + QLatin1String("/images/")
+                + filename;
+        qDebug() <<Q_FUNC_INFO << path;
         ImageSerializer::fromBase64(base64,path);
         Message item;
         item.sender = sender;
-        item.data = "";
+        item.data = path;
         item.timeStamp = time;
-        item.imageurl = path;
-        item.documenturl = "";
+        item.type = "image";
         m_messagesModel->append(item);
     }
     else

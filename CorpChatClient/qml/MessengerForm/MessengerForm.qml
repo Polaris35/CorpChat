@@ -3,9 +3,11 @@ import QtQuick.Window 2.12
 import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.12
 import QtQuick.Layouts 1.12
+import Qt.labs.qmlmodels 1.0
 import GlobalQmlSettings 1.0
 import MessengerForm.MessageInputField 1.0
 import MessengerForm.MessagesView 1.0
+//import MessengerForm.ImageDelegate 1.0
 import MessengerForm.ContactsView 1.0
 
 import corpchat.models.contactsModel 1.0
@@ -73,26 +75,28 @@ Rectangle {
                 anchors.bottomMargin: messageInput.height + 75
                 anchors.leftMargin: 5
                 anchors.rightMargin: 5
-                model: messagesModel
                 spacing: 25 //75
 
                 verticalLayoutDirection: ListView.BottomToTop
-                delegate: MessagesDelegate {
-                    width: ListView.view.width
-                    time: model.timeStamp
-                    username: model.nickname
-                    message: model.text
-                    avatarSource: model.nickname == contactsModel.currentDialog(
-                                      ) ? Qt.resolvedUrl(
-                                              "file:///" + contactsModel.currentAvatar(
-                                                  )) : Qt.resolvedUrl(
-                                              "file:///" + applicationDirPath
-                                              + "/../images/" + client.username(
-                                                  ) + "_avatar.png")
-                    //"qrc:/qml/Images/Default"//model.avatar
-                    ListView.onAdd: {
-                        messagesView.positionViewAtBeginning()
+
+                model: messagesModel
+                delegate: chooser
+            }
+
+            DelegateChooser {
+                id: chooser
+                role: "type"
+                DelegateChoice {
+                    roleValue: "text"
+                    MessagesDelegate {
+                        nickname: model.nickname
+                        timeStamp: model.timeStamp
+                        message: model.text
                     }
+                }
+                DelegateChoice {
+                    roleValue: "image"
+                    ImageDelegate {}
                 }
             }
 
