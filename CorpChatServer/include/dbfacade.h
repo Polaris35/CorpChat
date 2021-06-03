@@ -10,6 +10,13 @@ class DBFacade : public QObject
 {
     Q_OBJECT
 public:
+    enum FileType : int
+    {
+        DOCUMENT,
+        IMAGE,
+        AUDIO
+
+    };
     explicit DBFacade(QObject *parent = nullptr);
 
     QSqlDatabase *db() const;
@@ -26,6 +33,11 @@ public:
                     const QString& text,
                     const QString &dateTime);
     void newImage(const QString &sender,
+                 const QStringList &recievers,
+                  const QString& filename,
+                 const QByteArray& image,
+                 const QString &dateTime);
+    void newDocument(const QString &sender,
                  const QStringList &recievers,
                   const QString& filename,
                  const QByteArray& image,

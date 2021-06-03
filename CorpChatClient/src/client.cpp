@@ -22,6 +22,7 @@
 
 #include "../include/userdata.h"
 
+
 Client::Client(QObject *parent) : QObject(parent),
     m_user{nullptr},
     m_contactsModel{nullptr},
@@ -82,7 +83,6 @@ void Client::sendMessage(QString text)
 
 void Client::sendImage(QString url)
 {
-
     net::Package package;
     QString delim = net::Package::delimiter();
     QString currentTime = QDateTime::currentDateTime().toString();
@@ -99,19 +99,8 @@ void Client::sendImage(QString url)
 
     qDebug() << Q_FUNC_INFO << "sending Image" << " to " << m_contactsModel->currentDialog() << " from " << package.sender();
 
-    //    QImage image;
-    //    image.load(url);
-    //    QByteArray imgRaw;
-    //    QBuffer buff(&imgRaw);
-
-    //    image.save(&buff);
-    //    QByteArray imageBase64 = imgRaw.toBase64();
-
     QByteArray imageBase64 = ImageSerializer::toBase64(url);
-    qDebug()<< Q_FUNC_INFO << "image size " << imageBase64.size();
-
-    if(imageBase64.size() > std::numeric_limits<quint64>::max())
-        qFatal("variable is overflow!!!");
+    qDebug()<< Q_FUNC_INFO << "image size " << imageBase64.size();    
 
     package.setData(FileName + delim + currentTime /*+ delim + QFile(url).fileName()*/ + delim + imageBase64);
 
@@ -120,10 +109,33 @@ void Client::sendImage(QString url)
     newImage(package.sender(),FileName, currentTime, imageBase64);
 }
 
-void Client::sendDocument(QString url, QString reciver)
+void Client::sendDocument(QString url)
 {
-    Q_UNUSED(url)
-    Q_UNUSED(reciver)
+    net::Package package;
+    QString delim = net::Package::delimiter();
+    QString currentTime = QDateTime::currentDateTime().toString();
+
+    QString fixedUrl = url.remove(0,8); //remove "file:///"
+
+    QFileInfo doc(fixedUrl);
+
+    QString FileName = doc.fileName();
+
+    package.setType(net::Package::DataType::DOCUMENT);
+    package.setSender(m_user->username());
+    package.setDestinations({m_contactsModel->currentDialog()});
+
+    qDebug() << Q_FUNC_INFO << "sending Document" << " to " << m_contactsModel->currentDialog() << " from " << package.sender();
+
+    QByteArray rawDoc = DocumentSerializer::toByte(fixedUrl);
+    qDebug()<< Q_FUNC_INFO << "document size " << rawDoc.size();
+
+    package.setData(FileName + delim + currentTime  + delim + rawDoc);
+
+    m_connection.sendPackage(package);
+
+    newDocument(package.sender(),FileName, currentTime, rawDoc);
+
 }
 
 void Client::getContactsList()
@@ -196,7 +208,7 @@ void Client::addContact(const QString &contactData)
     //QString path = *Globals::imagesPath + QDir::separator() + item.nickname + "_avatar.png";
     QString path = QDir::currentPath()
             //+ QDir::separator()
-            + QLatin1String("/images/")
+            + QLatin1String("/downloads/")
             //+ QDir::separator()
             + item.nickname + "_avatar.png";
     item.imageUrl = path;
@@ -249,10 +261,8 @@ void Client::newImage(QString sender, QString filename, QString time, QByteArray
 {    
     if(sender == m_contactsModel->currentDialog() || sender == m_user->username())
     {
-//        QString path = QDir::currentPath() +
-//                QLatin1String("/images/") + filename;
         QString path = QDir::currentPath()
-                + QLatin1String("/images/")
+                + QLatin1String("/downloads/")
                 + filename;
         qDebug() <<Q_FUNC_INFO << path;
         ImageSerializer::fromBase64(base64,path);
@@ -280,15 +290,38 @@ void Client::newMessage(QString raw)
     newMessage(sender,time,text);
 }
 
-void Client::newDocument(QString sender, QByteArray base64)
+void Client::newDocument(QString sender, QString filename, QString time, QByteArray base64)
 {
-    Q_UNUSED(sender)
-    Q_UNUSED(base64)
+    if(sender == m_contactsModel->currentDialog() || sender == m_user->username())
+    {
+        QString path = QDir::currentPath()
+                + QLatin1String("/downloads/")
+                + filename;
+        qDebug() <<Q_FUNC_INFO << path;
+        DocumentSerializer::fromByte(base64,path);
+        Message item;
+        item.sender = sender;
+        item.data = path;
+        item.timeStamp = time;
+        item.type = "document";
+        m_messagesModel->append(item);
+    }
+    else
+    {
+        emit notifyMessage(sender);
+    }
 }
 
 void Client::newDocument(QString raw)
-{
-    Q_UNUSED(raw)
+{    
+    //nick$$$filename$$$time$$$doc
+    QStringList data = raw.split(net::Package::delimiter());
+    QString sender = data.at(0);
+    QString filename = data.at(1);
+    QString time = data.at(2);
+    QByteArray doc = data.at(3).toUtf8();
+    qDebug() << "We have a document " << filename;
+    newDocument(sender,filename,time,doc);
 }
 
 
@@ -319,7 +352,7 @@ void Client::authorize(QString username, QByteArray base64)
 
     QString path = QDir::currentPath()
             //+ QDir::separator()
-            + QLatin1String("/images/")
+            + QLatin1String("/downloads/")
             //+ QDir::separator()
             + username + "_avatar.png";
 
@@ -426,7 +459,7 @@ void Client::packageRecieved(net::Package package)
         newImage(package.sender() + net::Package::delimiter() + data); //nick$$$filename$$$time$$$image
         break;
     case net::Package::DOCUMENT:
-        newDocument(package.sender(), data);
+        newDocument(package.sender() + net::Package::delimiter() + data); //nick$$$filename$$$time$$$doc
         break;
     }
 }

@@ -13,6 +13,7 @@
 #include "include/connection.h"
 #include "include/package.h"
 #include "include/imageserializer.h"
+#include "include/DocumentSerializer.h"
 //#include "userdata.h"
 //#include "contactsmodel.h"
 
@@ -45,7 +46,7 @@ public slots:
 
     void sendMessage(QString text);
     void sendImage(QString url);
-    void sendDocument(QString url, QString reciver);
+    void sendDocument(QString url);
 
     void getContactsList();
     void getMessageHistory();
@@ -71,7 +72,7 @@ private:
     void addMessage(QString);
     void newMessage(QString sender, QString time,QString text);
     void newMessage(QString raw);
-    void newDocument(QString sender, QByteArray base64);
+    void newDocument(QString sender, QString filename, QString time, QByteArray base64);
     void newDocument(QString raw);
     void newImage(QString raw);
     void newImage(QString sender, QString filename, QString time, QByteArray base64);

@@ -56,7 +56,7 @@ Rectangle {
             property: "color"
             from: Qt.rgba(0, 0, 0, 0.3)
             to: Qt.rgba(0, 0, 0, 0.75)
-            duration: 500
+            duration: 100
         }
         ColorAnimation {
             id: animationOpacityBGClose
@@ -64,21 +64,21 @@ Rectangle {
             property: "color"
             from: Qt.rgba(0, 0, 0, 0.75)
             to: Qt.rgba(0, 0, 0, 0.3)
-            duration: 499
+            duration: 99
         }
         ScaleAnimator {
             id: animationScaleImageOpen
             target: dialog
             from: 0.4
             to: 1
-            duration: 500
+            duration: 100
         }
         ScaleAnimator {
             id: animationScaleImageClose
             target: dialog
             from: 1
             to: 0.4
-            duration: 500
+            duration: 100
             onFinished: {
                 imageClickForm.visible = false
             }
@@ -106,13 +106,13 @@ Rectangle {
             Label {
                 id: logo_text
                 color: Material.color(Material.Red)
-                text: "Corp Chat"
+                text: "☰ Corp Chat"
                 font.family: starsetFont.name
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.topMargin: 10
                 //Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
-                font.pointSize: 32
+                font.pointSize: 28
                 //Layout.topMargin: 10
             }
 

@@ -30,7 +30,7 @@ public:
         {
             qDebug() << Q_FUNC_INFO << "Can't load image from " << path;
         }
-        QByteArray imgRaw;         
+        QByteArray imgRaw;
         QBuffer buff(&imgRaw);
 
         buff.open(QIODevice::WriteOnly | QIODevice::Truncate);

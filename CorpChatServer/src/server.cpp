@@ -55,11 +55,11 @@ void Server::newPackage(const net::Package &package)
     case net::Package::TEXT_MESSAGE: //Текстовое сообщение
         sendMessage(package);
         break;
-    case net::Package::IMAGE: // Send to user images
+    case net::Package::IMAGE: // Send images to user
         sendImage(package);
         break;
-    case net::Package::DOCUMENT:
-
+    case net::Package::DOCUMENT: // Send docs to user
+        sendDocument(package);
         break;
     }
 }
@@ -69,13 +69,19 @@ void Server::registerUser(net::Package package, net::Connection *connection)
     qInfo() << Q_FUNC_INFO;
     QString username = package.sender();
     QString password = package.destinations().toVector().first();
+
+    QString format = package.data().toString().split("%%%").at(0);
+
+    qDebug() << "image format is " << format;
+
+
     qDebug() << "PW: " << password;
-//    qDebug() << "DATA: " << data.last();
+    //    qDebug() << "DATA: " << data.last();
     QString path = QDir::currentPath()
             //+ QDir::separator()
-            + QLatin1String("/images/")
+            + QLatin1String("/downloads/")
             //+ QDir::separator()
-            + username + "_avatar.png";
+            + username + "_avatar." + format;
 
     ImageSerializer::fromBase64(package.data().toByteArray(),path);
 
@@ -191,19 +197,37 @@ void Server::sendImage(const net::Package &package)
     }
 }
 
+void Server::sendDocument(const net::Package &package)
+{
+    QString sender = package.sender();
+    QStringList destinations = package.destinations();
+    QStringList data = package.data().toString().split(net::Package::delimiter());
+    QString filename = data.at(0);
+    qDebug() << Q_FUNC_INFO << "filename is:" << filename;
+    QString dateTime = data.at(1);
+    QByteArray image = data.at(2).toUtf8();
+    m_database->newDocument(sender,destinations,filename,image,dateTime);
+
+    foreach(QString dest, destinations) {
+        if(m_clients.contains(dest)) {
+            m_clients.value(dest)->sendPackage(package);
+        }
+    }
+}
+
 void Server::newConversation(const QString &user1, const QString &user2)
 {
-   if(m_database->newConversation(user1, user2))
-   {
+    if(m_database->newConversation(user1, user2))
+    {
         sendContact(user1,user2);
         sendContact(user2,user1);
-   }
-//   else
-//   {
-//       net::Package item;
-//       item.setSender("");
-//       item.setDestinations({user1});
-//   }
+    }
+    //   else
+    //   {
+    //       net::Package item;
+    //       item.setSender("");
+    //       item.setDestinations({user1});
+    //   }
 }
 
 void Server::sendContact(const QString &to, const QString &other)

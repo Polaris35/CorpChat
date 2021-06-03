@@ -26,9 +26,10 @@ Rectangle {
         id: rowLayout
         spacing: 5
         anchors.fill: parent
-        readonly property int btnSize: 28
+        anchors.rightMargin: 0
+        readonly property int btnSize: 24
         Rectangle {
-            id: addFilesBtn
+            id: addImageBtn
             z: 5
             Layout.leftMargin: 5
             Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
@@ -36,44 +37,87 @@ Rectangle {
             Layout.preferredHeight: rowLayout.btnSize
             color: Qt.lighter(Material.backgroundColor)
             IconClickHighlight {
-                id: fileHighlight
+                id: imageHighlight
                 maxRadius: rowLayout.btnSize + 5
             }
             Image {
-                id: addFilesBtnImage
+                id: addImageBtnImage
                 width: rowLayout.btnSize
                 height: rowLayout.btnSize
                 anchors.centerIn: parent
-                source: "qrc:/qml/icons/add_circle_outline-white-48dp"
+                source: "qrc:/qml/icons/picture_icon"
                 MouseArea {
                     id: fileBtnArea
                     anchors.fill: parent
                     onClicked: {
-                        fileHighlight.run()
-                        fileDialog.visible = true
+                        imageHighlight.run()
+                        imageDialog.visible = true
                     }
                 }
             }
             FileDialog {
-                id: fileDialog
-                nameFilters: ["Image files (*.png *.jpg)"]
-                //selectMultiple: true
+                id: imageDialog
+                nameFilters: ["Image files (*.png *.jpg *.bmp)"]
+                selectMultiple: true
                 title: qsTr("Выберите файл")
                 folder: shortcuts.home
                 onAccepted: {
-                    console.log("You chose: " + fileDialog.fileUrls)
+                    console.log("You chose: " + imageDialog.fileUrls)
 
                     client.sendImage(fileUrls)
                 }
                 onRejected: {
-                    fileDialog.visible = false
+                    imageDialog.visible = false
                 }
             }
-        } //addFilesBtn
+        } //addImageBtn
+        Rectangle {
+            id: addDocumentBtn
+            z: 5
+            Layout.leftMargin: 5
+            Layout.alignment: Qt.AlignVCenter | Qt.AlignHCenter
+            Layout.preferredWidth: rowLayout.btnSize
+            Layout.preferredHeight: rowLayout.btnSize
+            color: Qt.lighter(Material.backgroundColor)
+            IconClickHighlight {
+                id: documentHighlight
+                maxRadius: rowLayout.btnSize + 5
+            }
+            Image {
+                id: addDocumentBtnImage
+                width: rowLayout.btnSize
+                height: rowLayout.btnSize
+                anchors.centerIn: parent
+                source: "qrc:/qml/icons/documents_icon"
+                MouseArea {
+                    id: documentBtnArea
+                    anchors.fill: parent
+                    onClicked: {
+                        documentHighlight.run()
+                        documentDialog.visible = true
+                    }
+                }
+            }
+            FileDialog {
+                id: documentDialog
+                nameFilters: ["Documents (*.doc *.docx *.pdf *.txt *.xlsx *.pptx *.rar *.7z *.zip)"]
+                selectMultiple: true
+                title: qsTr("Выберите файл")
+                folder: shortcuts.home
+                onAccepted: {
+                    console.log("You chose: " + documentDialog.fileUrls)
+
+                    client.sendDocument(fileUrls)
+                }
+                onRejected: {
+                    documentDialog.visible = false
+                }
+            }
+        } //addImageBtn
         Flickable {
             id: scrollView
 
-            Layout.preferredWidth: root.width - rowLayout.btnSize * 3 - rowLayout.spacing * 2 - 12
+            Layout.preferredWidth: root.width - rowLayout.btnSize * 5 - rowLayout.spacing * 3 - 12
             Layout.fillHeight: true
             flickableDirection: Flickable.VerticalFlick
             interactive: false

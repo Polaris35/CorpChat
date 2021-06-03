@@ -50,5 +50,7 @@
         <file>qml/MessengerForm/MessagesView/MessagesDelegate.qml</file>
         <file>qml/MessengerForm/MessagesView/ImageDelegate.qml</file>
         <file>qml/fonts/FARRAY.otf</file>
+        <file>qml/icons/documents_icon.svg</file>
+        <file>qml/icons/picture_icon.svg</file>
     </qresource>
 </RCC>

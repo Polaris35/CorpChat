@@ -38,6 +38,7 @@ private slots:
     void sendContactsList(QString user);
     void sendMessage(const net::Package &package);
     void sendImage(const net::Package& package);
+    void sendDocument(const net::Package& package);
     void newConversation(const QString &user1, const QString &user2);
 
 private:

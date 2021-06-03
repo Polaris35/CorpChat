@@ -8,6 +8,7 @@
 #include<QImage>
 #include "include/package.h"
 #include "include/imageserializer.h"
+#include "include/DocumentSerializer.h"
 
 DBFacade::DBFacade(QObject *parent) : QObject(parent)
 {
@@ -165,7 +166,7 @@ QStringList DBFacade::messageHistory(QString user1, QString user2)
     qDebug() << query.size();
     QSqlQuery secondq;
     int id;
-    secondq.prepare("SELECT COUNT(*), uuid FROM attachments WHERE id_message = :id");
+    secondq.prepare("SELECT COUNT(*), url FROM attachments WHERE id_message = :id");
 
     while(query.next()) {
         if(query.value(3).toString() == "text")
@@ -379,7 +380,62 @@ void DBFacade::newMessage(const QString &sender, const QStringList &recievers, c
 }
 
 void DBFacade::newImage(const QString &sender, const QStringList &recievers,
-                        const QString& filename, const QByteArray &imageb, const QString &dateTime)
+                        const QString& filename, const QByteArray &imageb,
+                       const QString &dateTime)
+{
+
+
+    QSqlQuery query(*m_db);
+        query.prepare("INSERT INTO messages (id_sender, id_conversation, message_type, created_at, deleted_at) "
+                      "SELECT u.id, c.id,:type , :datetime, :deletedat "
+                      "FROM useres u "
+                      "INNER JOIN participants p ON u.id = p.id_useres "
+                      "INNER JOIN conversations c ON p.id_conversation = c.id "
+                      "WHERE (u.nickname = :sender) "
+                      "AND "
+                      "( "
+                      "(c.title LIKE CONCAT(:receiver, '$$$', :sender)) "
+                      "OR "
+                      "(c.title LIKE CONCAT(:sender, '$$$', :receiver)) "
+                      ") "
+                      );
+        query.bindValue(":type","image");
+        query.bindValue(":datetime", QDateTime::fromString(dateTime));
+        query.bindValue(":deletedat", QVariant());
+        query.bindValue(":sender", sender);
+        query.bindValue(":receiver", recievers.first());
+        bool ok = query.exec();
+        if(!ok) {
+            qWarning() << Q_FUNC_INFO << query.lastError().text();
+        }
+
+        QVariant id = query.lastInsertId();
+
+        query.finish();
+
+
+
+        qDebug() << "image in message column  has id:" << id.toInt();
+
+        QString path = QDir::currentPath() + QDir::separator() + "downloads" + QDir::separator() +
+                QUuid::createUuid().toString().remove('{').remove('}') + "_" + filename;
+
+        ImageSerializer::fromBase64(imageb,path);
+
+        query.prepare("INSERT INTO attachments  (id_message,url) VALUES(:id, :url);");
+
+        query.bindValue(":url", path);
+        query.bindValue(":id",id.toInt());
+
+        ok = query.exec();
+        if(!ok) {
+            qWarning() << Q_FUNC_INFO << query.lastError().text();
+        }
+}
+
+void DBFacade::newDocument(const QString &sender, const QStringList &recievers,
+                           const QString &filename, const QByteArray &document,
+                           const QString &dateTime)
 {
     QSqlQuery query(*m_db);
     query.prepare("INSERT INTO messages (id_sender, id_conversation, message_type, created_at, deleted_at) "
@@ -395,7 +451,7 @@ void DBFacade::newImage(const QString &sender, const QStringList &recievers,
                   "(c.title LIKE CONCAT(:sender, '$$$', :receiver)) "
                   ") "
                   );
-    query.bindValue(":type","image");
+    query.bindValue(":type","document");
     query.bindValue(":datetime", QDateTime::fromString(dateTime));
     query.bindValue(":deletedat", QVariant());
     query.bindValue(":sender", sender);
@@ -411,16 +467,16 @@ void DBFacade::newImage(const QString &sender, const QStringList &recievers,
 
 
 
-    qDebug() << "image in message column  has id:" << id.toInt();
+    qDebug() << "file in message column  has id:" << id.toInt();
 
-    QString path = QDir::currentPath() + QDir::separator() + "images" + QDir::separator() +
+    QString path = QDir::currentPath() + QDir::separator() + "downloads" + QDir::separator() +
             QUuid::createUuid().toString().remove('{').remove('}') + "_" + filename;
 
-    ImageSerializer::fromBase64(imageb,path);
+    DocumentSerializer::fromByte(document,path);
 
-    query.prepare("INSERT INTO attachments (uuid, id_message) VALUES(:uuid, :id);");
+    query.prepare("INSERT INTO attachments  (id_message,url) VALUES(:id, :url);");
 
-    query.bindValue(":uuid", path);
+    query.bindValue(":url", path);
     query.bindValue(":id",id.toInt());
 
     ok = query.exec();

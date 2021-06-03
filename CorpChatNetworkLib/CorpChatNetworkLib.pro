@@ -18,6 +18,7 @@ SOURCES += \
 
 HEADERS += \
     include/CorpChatNetworkLib_global.h \
+    include/DocumentSerializer.h \
     include/IConnection.h \
     include/IPackageSerializer.h \
     include/connection.h \
