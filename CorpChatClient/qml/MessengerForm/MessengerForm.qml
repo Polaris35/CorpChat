@@ -37,7 +37,8 @@ Rectangle {
             id: close
             anchors.fill: parent
             onClicked: {
-                imageClickForm.visible = false
+                animationScaleImageClose.start()
+                animationOpacityBGClose.start()
             }
         }
         Image {
@@ -47,6 +48,40 @@ Rectangle {
             width: sourceSize.width < 900 ? sourceSize.width : 900
             height: sourceSize.height < 560 ? sourceSize.height : 560
             anchors.centerIn: parent
+        }
+
+        ColorAnimation {
+            id: animationOpacityBGOpen
+            target: imageClickForm
+            property: "color"
+            from: Qt.rgba(0, 0, 0, 0.3)
+            to: Qt.rgba(0, 0, 0, 0.75)
+            duration: 500
+        }
+        ColorAnimation {
+            id: animationOpacityBGClose
+            target: imageClickForm
+            property: "color"
+            from: Qt.rgba(0, 0, 0, 0.75)
+            to: Qt.rgba(0, 0, 0, 0.3)
+            duration: 499
+        }
+        ScaleAnimator {
+            id: animationScaleImageOpen
+            target: dialog
+            from: 0.4
+            to: 1
+            duration: 500
+        }
+        ScaleAnimator {
+            id: animationScaleImageClose
+            target: dialog
+            from: 1
+            to: 0.4
+            duration: 500
+            onFinished: {
+                imageClickForm.visible = false
+            }
         }
     }
 
@@ -125,7 +160,9 @@ Rectangle {
                         onImageClick: {
                             dialog.source = source
                             imageClickForm.visible = true
-                            console.log("image should be visible")
+                            animationScaleImageOpen.start()
+                            animationOpacityBGOpen.start()
+                            //console.log("image should be visible")
                         }
                     }
                 }
