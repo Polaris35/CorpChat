@@ -29,9 +29,10 @@ ApplicationWindow {
         initialItem: loginFormStackComponent
         property real offset: 10
         Component {
-            id: mainFormStackComponent
+            id: mainFormStackComponent            
             MessengerForm {
                 id: mainForm
+                anchors.fill: parent
             }
         }
         Component {

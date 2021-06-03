@@ -14,7 +14,7 @@ Rectangle {
     visible: true
     FontLoader {
         id: starsetFont
-        source: "../../fonts/jaapokkisubtract-regular.ttf"
+        source: "../../fonts/FARRAY.otf"
     }
     signal auth(string login, string password)
     signal gotoRegister
@@ -24,22 +24,10 @@ Rectangle {
         z: 0
         color: Material.backgroundColor
         anchors.fill: parent
-
-        Rectangle {
-            color: Material.color(Material.Red)
-            width: 450
-            height: 200
-            anchors.right: background.right
-            anchors.rightMargin: -150
-            anchors.top: background.top
-            anchors.topMargin: -150
-            rotation: 45
-        }
-
         Label {
             id: logo_text
             color: Material.color(Material.Red)
-            text: "C o r p C h a t"
+            text: "Corp Chat"
             font.family: starsetFont.name
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top

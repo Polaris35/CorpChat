@@ -49,5 +49,6 @@
         <file>qml/icons/minimize-white.svg</file>
         <file>qml/MessengerForm/MessagesView/MessagesDelegate.qml</file>
         <file>qml/MessengerForm/MessagesView/ImageDelegate.qml</file>
+        <file>qml/fonts/FARRAY.otf</file>
     </qresource>
 </RCC>

@@ -7,7 +7,6 @@ import Qt.labs.qmlmodels 1.0
 import GlobalQmlSettings 1.0
 import MessengerForm.MessageInputField 1.0
 import MessengerForm.MessagesView 1.0
-//import MessengerForm.ImageDelegate 1.0
 import MessengerForm.ContactsView 1.0
 
 import corpchat.models.contactsModel 1.0
@@ -19,12 +18,38 @@ Rectangle {
     width: GlobalSettings.defaultFormWidth
     FontLoader {
         id: starsetFont
-        source: "../fonts/jaapokkisubtract-regular.ttf"
+        source: "../fonts/FARRAY.otf"
     }
     FontLoader {
         id: emojiFont
         source: "../fonts/OpenSansEmoji.ttf"
     }
+    Rectangle {
+        id: imageClickForm
+        visible: false
+        opacity: 1
+        color: Qt.rgba(0, 0, 0, 0.75)
+        anchors.fill: parent
+        anchors.centerIn: parent
+        z: 2
+        layer.enabled: true
+        MouseArea {
+            id: close
+            anchors.fill: parent
+            onClicked: {
+                imageClickForm.visible = false
+            }
+        }
+        Image {
+            id: dialog
+            z: 3
+            opacity: 1
+            width: sourceSize.width < 900 ? sourceSize.width : 900
+            height: sourceSize.height < 560 ? sourceSize.height : 560
+            anchors.centerIn: parent
+        }
+    }
+
     SplitView {
         id: splitView
         anchors.fill: parent
@@ -96,7 +121,13 @@ Rectangle {
                 }
                 DelegateChoice {
                     roleValue: "image"
-                    ImageDelegate {}
+                    ImageDelegate {
+                        onImageClick: {
+                            dialog.source = source
+                            imageClickForm.visible = true
+                            console.log("image should be visible")
+                        }
+                    }
                 }
             }
 

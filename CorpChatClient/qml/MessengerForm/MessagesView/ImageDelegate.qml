@@ -9,9 +9,9 @@ import GlobalQmlSettings 1.0
 import MessengerForm.RoundImage 1.0
 
 Column {
+    signal imageClick(url source)
     width: ListView.view.width
-    property alias url: messageImage.source
-    property bool sentByMe: model.nickname !== contactsModel.currentDialog()
+    readonly property bool sentByMe: model.nickname !== contactsModel.currentDialog()
     ListView.onAdd: {
         messagesView.positionViewAtBeginning()
     }
@@ -42,6 +42,12 @@ Column {
             Component.onCompleted: {
                 console.log(Qt.resolvedUrl("file:///" + model.text))
                 console.log(messageImage.status.toString())
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    imageClick(messageImage.source)
+                }
             }
         }
     }

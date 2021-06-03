@@ -38,9 +38,9 @@ Rectangle {
             Layout.preferredHeight: 40
             Layout.leftMargin: 5
             Layout.alignment: Qt.AlignLeft
-            Component.onCompleted: {
-                console.log("Avatar source = " + avatarSource)
-            }
+//            Component.onCompleted: {
+//                console.log("Avatar source = " + avatarSource)
+//            }
         }
         Label {
             id: usernameLabel
