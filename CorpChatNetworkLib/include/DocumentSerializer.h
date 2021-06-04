@@ -35,7 +35,7 @@ public:
 
             return;
         }
-        file.write(raw);
+        file.write(QByteArray::fromBase64(raw));
         file.close();
     }
 
@@ -46,7 +46,7 @@ public:
         if(file.open(QIODevice::ReadOnly))
             qDebug() << Q_FUNC_INFO << "Cant open file! path: " << path;
 
-        QByteArray raw = file.readAll();
+        QByteArray raw = file.readAll().toBase64();
         qDebug() << "document size: " << raw.size();
 
         return raw;

@@ -106,7 +106,7 @@ Rectangle {
             Label {
                 id: logo_text
                 color: Material.color(Material.Red)
-                text: "☰ Corp Chat"
+                text: "Corp Chat"
                 font.family: starsetFont.name
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
@@ -164,6 +164,12 @@ Rectangle {
                             animationOpacityBGOpen.start()
                             //console.log("image should be visible")
                         }
+                    }
+                }
+                DelegateChoice {
+                    roleValue: "document"
+                    DocumentDelegate {
+                        url: model.text
                     }
                 }
             }

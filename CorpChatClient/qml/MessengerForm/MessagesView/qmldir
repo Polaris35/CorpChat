@@ -2,3 +2,4 @@ module MessagesView
 MessagesDelegate 1.0 MessagesDelegate.qml
 ImageDelegate 1.0 ImageDelegate.qml
 MessagesView 1.0 MessagesView.qml
+DocumentDelegate 1.0 DocumentDelegate.qml

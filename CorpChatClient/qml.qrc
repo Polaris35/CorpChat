@@ -52,5 +52,6 @@
         <file>qml/fonts/FARRAY.otf</file>
         <file>qml/icons/documents_icon.svg</file>
         <file>qml/icons/picture_icon.svg</file>
+        <file>qml/MessengerForm/MessagesView/DocumentDelegate.qml</file>
     </qresource>
 </RCC>

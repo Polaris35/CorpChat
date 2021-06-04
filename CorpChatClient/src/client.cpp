@@ -119,7 +119,7 @@ void Client::sendDocument(QString url)
 
     QFileInfo doc(fixedUrl);
 
-    QString FileName = doc.fileName();
+    QString FileName = doc.fileName().replace(" ","_");
 
     package.setType(net::Package::DataType::DOCUMENT);
     package.setSender(m_user->username());

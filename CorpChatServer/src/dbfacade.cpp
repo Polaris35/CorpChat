@@ -231,7 +231,7 @@ QStringList DBFacade::messageHistory(QString user1, QString user2)
                         query.value(0).toString()                       + net::Package::delimiter() +
                         QFileInfo(path).fileName()                      + net::Package::delimiter() +
                         query.value(1).toDateTime().toString()          + net::Package::delimiter() +
-                        ImageSerializer::toBase64(path));
+                        DocumentSerializer::toByte(path));
         }
     }
     qDebug() << "Message history has size:" << messages.size();
@@ -470,7 +470,7 @@ void DBFacade::newDocument(const QString &sender, const QStringList &recievers,
     qDebug() << "file in message column  has id:" << id.toInt();
 
     QString path = QDir::currentPath() + QDir::separator() + "downloads" + QDir::separator() +
-            QUuid::createUuid().toString().remove('{').remove('}') + "_" + filename;
+            QUuid::createUuid().toString().remove('{').remove('}') + "+" + filename;
 
     DocumentSerializer::fromByte(document,path);
 
