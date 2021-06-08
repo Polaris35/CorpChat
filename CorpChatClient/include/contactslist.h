@@ -5,6 +5,7 @@
 struct Contact
 {
     QString nickname;
+    QString email;
     QString imageUrl;
 
     bool operator==(const Contact& other)
@@ -20,7 +21,7 @@ public:
     bool setItemAt(int index, const Contact &item);
 
     bool exists(const Contact &item) const;
-    bool exists(const QString &username) const;
+    bool exists(const QString &email) const;
 
     QList<Contact> &items();
 

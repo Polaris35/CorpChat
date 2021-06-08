@@ -17,7 +17,6 @@ namespace net
 class CORPCHATNETWORKLIB_EXPORT Connection : public QObject
 {
     Q_OBJECT
-
 public:
     explicit Connection(QObject *parent = nullptr);
 
@@ -49,13 +48,11 @@ private slots:
     void error(QAbstractSocket::SocketError socketError);
     void stateChanged(QAbstractSocket::SocketState socketState);
     void readyRead();
-private:
-    //QDataStream m_stream;
+private:    
     QTcpSocket *m_socket;
     IPackageSerializer *m_serializer;
     QAbstractSocket::SocketState m_state;
     quint64 m_blockSize;
-
 }; //class Connection
 
 } //namespace net

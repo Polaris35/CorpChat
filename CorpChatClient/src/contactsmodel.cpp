@@ -19,7 +19,7 @@ int ContactsModel::currentIndex() const
 QString ContactsModel::currentDialog() const
 {
     qDebug() << currentIndex();
-    return data(this->index(currentIndex()),Roles::NicknameRole).toString();
+    return data(this->index(currentIndex()),Roles::EmailRole).toString();
 }
 
 QString ContactsModel::currentAvatar() const
@@ -51,6 +51,10 @@ QVariant ContactsModel::data(const QModelIndex &index, int role) const
     const Contact &item = m_list->items().at(index.row());
 
     switch (role) {
+
+    case EmailRole:
+        return QVariant(item.email);
+
     case NicknameRole:
         return QVariant(item.nickname);
 
@@ -72,10 +76,12 @@ bool ContactsModel::setData(const QModelIndex &index, const QVariant &value, int
     Contact item = m_list->items().at(index.row());
 
     switch (role) {
+    case EmailRole:
+        item.email = value.toString();
+        break;
     case NicknameRole:
         item.nickname = value.toString();
         break;
-
     case ImageRole:
         item.imageUrl = value.toString();
         break;
@@ -120,9 +126,9 @@ Qt::ItemFlags ContactsModel::flags(const QModelIndex &index) const
 QHash<int, QByteArray> ContactsModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
+    roles[EmailRole] = "email";
     roles[NicknameRole] = "nickname";
     roles[ImageRole] = "avatar";
-
     return roles;
 }
 
@@ -169,6 +175,7 @@ void ContactsModel::append(const Contact &item)
     }
     bool ok = 0;
 
+    ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.email), Roles::EmailRole);
     ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.nickname), Roles::NicknameRole);
     ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.imageUrl), Roles::ImageRole);
 

@@ -82,6 +82,7 @@ Column {
                 anchors.fill: parent
                 anchors.topMargin: 0
                 anchors.leftMargin: 0
+                cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     Qt.openUrlExternally(url)
                 }

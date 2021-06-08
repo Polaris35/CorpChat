@@ -10,12 +10,12 @@
 class ContactsModel : public QAbstractListModel
 {
     Q_OBJECT
-    //    Q_PROPERTY(ContactsList m_list READ list)
 public:
     enum Roles
-    {
-        NicknameRole = Qt::UserRole + 1,
-        ImageRole
+    {		
+		EmailRole = Qt::UserRole + 1,
+		NicknameRole,
+		ImageRole
     };
     ContactsModel(QObject *parent = nullptr);
     ContactsList *list() const;

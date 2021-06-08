@@ -41,8 +41,8 @@ public:
     void start();
     void start(QString hostIp, quint64 port);
 public slots:
-    void registerNewUser(QString username, QString password, QString imgUrl);
-    void authorize(QString username, QString password);
+    void registerNewUser(QString username,QString email, QString password, QString imgUrl);
+    void authorize(QString email, QString password);
 
     void sendMessage(QString text);
     void sendImage(QString url);
@@ -52,9 +52,11 @@ public slots:
     void getMessageHistory();
 
     void loadContactsList(const QStringList &json);
+    void loadConversationList(const QStringList& json);
     void loadMessageHistory(const QStringList &json);
 
-    void requestContact(QString username);
+    void requestContact(QString email);
+    void createConversation(QString title,QString path, QStringList users);
 
     void qmlNotifyUnreadMessage(QString sender);
 private slots:
@@ -69,7 +71,6 @@ signals:
     void notifyMessage(QString sender);
 private:
     void addContact(const QString &contactData);
-    void addMessage(QString);
     void newMessage(QString sender, QString time,QString text);
     void newMessage(QString raw);
     void newDocument(QString sender, QString filename, QString time, QByteArray base64);
@@ -77,7 +78,7 @@ private:
     void newImage(QString raw);
     void newImage(QString sender, QString filename, QString time, QByteArray base64);
 
-    void authorize(QString username, QByteArray base64);
+    void authorize(QString username, QString email, QByteArray base64);
 private:
     UserData *m_user;
     net::Connection m_connection;

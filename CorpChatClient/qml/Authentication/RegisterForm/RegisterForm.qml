@@ -48,6 +48,33 @@ Rectangle {
         spacing: 1
 
         TextField {
+            id: inputEmail
+            property var accent: Material.color(Material.Teal)
+            Layout.minimumHeight: 40
+            Layout.minimumWidth: 150
+            Layout.alignment: Qt.AlignHCenter
+            width: 150
+            Material.accent: accent
+            placeholderText: qsTr("Email")
+            ErrorString {
+                id: inputEmailErrorString
+                anchors.top: inputEmail.bottom
+                visible: false
+                text: qsTr("Введите email")
+            }
+            ErrorString {
+                id: inputEmailValidationErrorString
+                anchors.top: inputEmail.bottom
+                visible: false
+                text: qsTr("email not valid!")
+            }
+            onTextChanged: {
+                inputEmailErrorString.visible = false
+                inputEmail.accent = Material.color(Material.Teal)
+            }
+        }
+
+        TextField {
             id: inputNickname
             property var accent: Material.color(Material.Teal)
             Layout.minimumHeight: 40
@@ -67,6 +94,7 @@ Rectangle {
                 inputNickname.accent = Material.color(Material.Teal)
             }
         }
+
         TextField {
             id: inputPassword
             property var accent: Material.color(Material.Teal)
@@ -152,6 +180,7 @@ Rectangle {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideRight
             }
+
             FileDialog {
                 id: chooseAvatarDialog
                 title: qsTr("Выберите файл")
@@ -174,9 +203,16 @@ Rectangle {
             }
         }
         ErrorString {
+            id: chooseAvatarErrorString
+            visible: false
+            text: qsTr("Ошибка аватар не выбран")
+            anchors.bottom: registerErrorString.top
+            anchors.bottomMargin: 30
+        }
+        ErrorString {
             id: registerErrorString
             visible: false
-            text: qsTr("Ошибка Регистрации.\nВероятно, данный никнейм уже зарегестрирован")
+            text: qsTr("Ошибка Регистрации.\nВероятно, данный email уже зарегестрирован")
             anchors.bottom: confirmRegistration.top
             anchors.bottomMargin: 30
         }
@@ -204,17 +240,29 @@ Rectangle {
                     return true
                 }
 
-                var check_rezult = checkField(inputPassword,
-                                              pwErrorString) & checkField(
-                            confirmPassword,
-                            pwcErrorString) & checkField(inputNickname,
-                                                         nicknameErrorString)
+                function validateEmail(email) {
+                    var re = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/
+                    if (!re.test(String(email).toLowerCase())) {
+                        inputEmailValidationErrorString.visible = true
+                        return false
+                    }
+                    return true
+                }
+
+                var check_rezult = checkField(inputPassword, pwErrorString)
+                        & checkField(confirmPassword,
+                                     pwcErrorString) & checkField(
+                            inputNickname, nicknameErrorString)
+                        & checkField(chooseAvatar.imageUrl,
+                                     chooseAvatarErrorString) & checkField(
+                            inputEmail, inputEmailErrorString)
+                        && validateEmail(inputEmail.text)
                 return check_rezult
             }
 
             onClicked: {
                 if (checkFields() && pwcErrorString.checkConditions())
-                    client.registerNewUser(inputNickname.text,
+                    client.registerNewUser(inputNickname.text, inputEmail.text,
                                            inputPassword.text,
                                            chooseAvatar.imageUrl)
             }

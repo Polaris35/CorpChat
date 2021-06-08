@@ -57,6 +57,19 @@ Rectangle {
             Layout.alignment: Qt.AlignHCenter
             Material.accent: accent
             width: 150
+            text: "ikozluk160@gmail.com"
+            onTextChanged: {
+                loginErrorString.visible = false
+                loginValidationErrorString.visible = false
+                login_input.accent = Material.color(Material.Teal)
+            }
+
+            ErrorString {
+                id: loginValidationErrorString
+                anchors.top: login_input.bottom
+                visible: false
+                text: qsTr("Логин введен неправильно")
+            }
             ErrorString {
                 id: loginErrorString
                 anchors.top: login_input.bottom
@@ -70,6 +83,7 @@ Rectangle {
             Layout.minimumHeight: 40
             Layout.minimumWidth: 150
             Layout.alignment: Qt.AlignHCenter
+            text: "1"
             width: 150
             Material.accent: accent
 
@@ -140,10 +154,20 @@ Rectangle {
                         return true
                     }
 
+                    function validateEmail(email) {
+                        var re = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/
+                        if (!re.test(String(email).toLowerCase())) {
+                            loginValidationErrorString.visible = true
+                            return false
+                        }
+                        return true
+                    }
+
                     var check_rezult = checkField(
                                 login_input,
                                 loginErrorString) & checkField(password_input,
                                                                pwErrorString)
+                            && validateEmail(login_input.text)
 
                     return check_rezult
                 }

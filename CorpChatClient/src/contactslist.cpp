@@ -12,7 +12,8 @@ bool ContactsList::setItemAt(int index, const Contact &item)
 
     const Contact &oldItem = m_items.at(index);
 
-    if(item.nickname == oldItem.nickname && item.imageUrl == oldItem.imageUrl)
+    if(item.nickname == oldItem.nickname && item.imageUrl == oldItem.imageUrl
+            &&item.email == oldItem.email)
         return false;
 
     m_items[index] = item;
@@ -24,11 +25,11 @@ bool ContactsList::exists(const Contact &item) const
     return m_items.contains(item);
 }
 
-bool ContactsList::exists(const QString &username) const
+bool ContactsList::exists(const QString &email) const
 {
     foreach(Contact c, m_items)
     {
-        if(c.nickname == username)
+        if(c.email == email)
             return true;
     }
     return false;

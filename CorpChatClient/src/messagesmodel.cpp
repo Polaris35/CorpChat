@@ -32,7 +32,7 @@ QVariant MessagesModel::data(const QModelIndex &index, int role) const
     case SenderRole:
         return QVariant(item.sender);
 
-    case TextRole:
+    case TextRole:        
         return QVariant(item.data);
 
     case TimeRole:

@@ -30,16 +30,21 @@ public:
 private slots:
     void newConnection();
     void disconnected();
+
     void newPackage(const net::Package &package);
 
     void registerUser(net::Package package, net::Connection *connection);
     void authorize(net::Package package, net::Connection *connection);
+    void sendMessageHistory(const QString& to, const int& conversation_id);
     void sendMessageHistory(const QString &to, const QStringList &conversants);
     void sendContactsList(QString user);
+    void sendConversationList(QString user);
     void sendMessage(const net::Package &package);
     void sendImage(const net::Package& package);
     void sendDocument(const net::Package& package);
+    void CreateConversation(const net::Package& package);
     void newConversation(const QString &user1, const QString &user2);
+    void addUsersToConversation(const int& conversation_id, const QStringList& users);
 
 private:
     void sendContact(const QString &to, const QString &other);

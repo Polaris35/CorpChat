@@ -22,7 +22,11 @@ public:
         USER_DATA,
         TEXT_MESSAGE,
         IMAGE,
-        DOCUMENT
+        DOCUMENT,
+        CreateConversation,
+        AddtoConversation,
+        GROUP_MESSAGE_HISTORY,
+        CONVERSATION_REQUEST
     };
     Q_ENUM(DataType)
 public:

@@ -26,3 +26,13 @@ void UserData::setImageUrl(const QString &imageUrl)
     m_imageUrl = imageUrl;
     emit imageUrlChanged(imageUrl);
 }
+
+QString UserData::email() const
+{
+    return m_email;
+}
+
+void UserData::setEmail(const QString &email)
+{
+    m_email = email;
+}

@@ -33,35 +33,51 @@ Client::Client(QObject *parent) : QObject(parent),
 
 }
 
-void Client::registerNewUser(QString username, QString password, QString imgUrl)
+void Client::registerNewUser(QString username, QString email, QString password, QString imgUrl)
 {
     net::Package package;
     QString fixedUrl = imgUrl.remove(0,8); // Удаляем "file:///" с начала пути
-
-    //QString delim = net::Package::delimiter();
-    package.setSender(username);
+    //email$$$username
+    package.setSender(email+ net::Package::delimiter() + username);
     package.setType(net::Package::DataType::REGISTRATION_REQUEST);
     package.setDestinations({password});
     QString avatarBase64 = ImageSerializer::toBase64(fixedUrl);
 
     package.setData(avatarBase64);
 
-    qDebug() << Q_FUNC_INFO << username << password << fixedUrl;
+    qDebug() << Q_FUNC_INFO << username << email << password << fixedUrl;
     qDebug() << Q_FUNC_INFO << package.data().toByteArray();
     m_connection.sendPackage(package);
 }
 
-void Client::authorize(QString username, QString password)
+void Client::authorize(QString email, QString password)
 {
     net::Package package;
 
     package.setType(net::Package::DataType::AUTH_REQUEST);
-    package.setSender(username);
+    package.setSender(email);
     package.setDestinations({});
 
     package.setData(password);
 
     m_connection.sendPackage(package);
+}
+
+void Client::authorize(QString username, QString email, QByteArray base64)
+{
+
+    qDebug() << Q_FUNC_INFO << " autorize user with: email = " << email << " username = " << username;
+    QString format = QString(base64.toStdString().c_str()).split("%%%").at(0);
+    QString path = QDir::currentPath()
+            //+ QDir::separator()
+            + QLatin1String("/downloads/")
+            //+ QDir::separator()
+            + email + "_avatar." + format;
+
+    ImageSerializer::fromBase64(base64,path);
+    m_user->setUsername(username);
+    m_user->setEmail(email);
+    m_user->setImageUrl(path);
 }
 
 void Client::sendMessage(QString text)
@@ -70,7 +86,7 @@ void Client::sendMessage(QString text)
     QString delim = net::Package::delimiter();
     QString currentTime = QDateTime::currentDateTime().toString();
     package.setType(net::Package::DataType::TEXT_MESSAGE);
-    package.setSender(m_user->username());
+    package.setSender(m_user->email());
     package.setDestinations({m_contactsModel->currentDialog()});
     package.setData(currentTime + delim + text);
 
@@ -94,7 +110,7 @@ void Client::sendImage(QString url)
     QString FileName = img.fileName();
 
     package.setType(net::Package::DataType::IMAGE);
-    package.setSender(m_user->username());
+    package.setSender(m_user->email());
     package.setDestinations({m_contactsModel->currentDialog()});
 
     qDebug() << Q_FUNC_INFO << "sending Image" << " to " << m_contactsModel->currentDialog() << " from " << package.sender();
@@ -122,7 +138,7 @@ void Client::sendDocument(QString url)
     QString FileName = doc.fileName().replace(" ","_");
 
     package.setType(net::Package::DataType::DOCUMENT);
-    package.setSender(m_user->username());
+    package.setSender(m_user->email());
     package.setDestinations({m_contactsModel->currentDialog()});
 
     qDebug() << Q_FUNC_INFO << "sending Document" << " to " << m_contactsModel->currentDialog() << " from " << package.sender();
@@ -141,7 +157,7 @@ void Client::sendDocument(QString url)
 void Client::getContactsList()
 {
     net::Package package;
-    package.setSender(m_user->username());
+    package.setSender(m_user->email());
     package.setDestinations({""});
     package.setType(net::Package::DataType::CONTACTS_LIST);
     package.setData({""}); //Don't need any data here. Placeholder for furher rework
@@ -160,7 +176,7 @@ void Client::getMessageHistory()
     }
     qDebug() << "Getting meesage jistory with user = " << user;
     net::Package package;
-    package.setSender(m_user->username());
+    package.setSender(m_user->email());
     package.setDestinations({user});
     package.setType(net::Package::DataType::MESSAGE_HISTORY);
     package.setData("");
@@ -200,35 +216,39 @@ void Client::loadMessageHistory(const QStringList &json)
 
 void Client::addContact(const QString &contactData)
 {
+    //email+nick+avatar+isRead
     Contact item;
     QStringList data = contactData.split(net::Package::delimiter());
 
-    item.nickname = data.first();
-    //qDebug() << contactData;
-    //QString path = *Globals::imagesPath + QDir::separator() + item.nickname + "_avatar.png";
-    QString path = QDir::currentPath()
-            //+ QDir::separator()
-            + QLatin1String("/downloads/")
-            //+ QDir::separator()
-            + item.nickname + "_avatar.png";
+    item.email = data.at(0);
+    item.nickname = data.at(1);
+
+    QString format = data.at(2).split("%%%").first();
+
+    qDebug() << Q_FUNC_INFO << "add contact with: email = " << item.email << " and nickname = " << item.nickname;
+
+    QString path = QDir::currentPath()            
+            + QLatin1String("/downloads/")            
+            + item.email + "_avatar." + format;
+
     item.imageUrl = path;
 
-    QByteArray imgRaw = data.last().toLocal8Bit();
+    QByteArray imgRaw = data.at(2).toLocal8Bit();
 
     //qDebug() << data;
 
     ImageSerializer::fromBase64(imgRaw,path);
     contactsModel()->append(item);
 
-    if(data.count() == 3)
-        if(data.at(1).toInt() == 1) {
-            m_toNotify << data.first();
+    if(data.count() == 5)
+        if(data.at(3).toInt() == 1) {
+            m_toNotify << data.at(0);
         }
 }
 
 void Client::newMessage(QString sender, QString time, QString text)
 {
-    if(sender == m_contactsModel->currentDialog() || sender == m_user->username())
+    if(sender == m_contactsModel->currentDialog() || sender == m_user->email())
     {
         Message item;
         item.sender = sender;
@@ -259,7 +279,7 @@ void Client::newImage(QString raw)
 
 void Client::newImage(QString sender, QString filename, QString time, QByteArray base64)
 {    
-    if(sender == m_contactsModel->currentDialog() || sender == m_user->username())
+    if(sender == m_contactsModel->currentDialog() || sender == m_user->email())
     {
         QString path = QDir::currentPath()
                 + QLatin1String("/downloads/")
@@ -292,7 +312,7 @@ void Client::newMessage(QString raw)
 
 void Client::newDocument(QString sender, QString filename, QString time, QByteArray base64)
 {
-    if(sender == m_contactsModel->currentDialog() || sender == m_user->username())
+    if(sender == m_contactsModel->currentDialog() || sender == m_user->email())
     {
         QString path = QDir::currentPath()
                 + QLatin1String("/downloads/")
@@ -326,17 +346,30 @@ void Client::newDocument(QString raw)
 
 
 
-void Client::requestContact(QString username)
+void Client::requestContact(QString email)
 {
-    qDebug() << Q_FUNC_INFO << "GIVE ME " << username;
-    if(m_contactsModel->list()->exists(username)) {
+    qDebug() << Q_FUNC_INFO << "GIVE ME " << email;
+    if(m_contactsModel->list()->exists(email)) {
         return;
     }
     net::Package item;
-    item.setSender(m_user->username());
+    item.setSender(m_user->email());
     item.setType(net::Package::USER_DATA);
-    item.setDestinations({username});
+    item.setDestinations({email});
     item.setData("");
+
+    m_connection.sendPackage(item);
+}
+
+void Client::createConversation(QString title, QString path, QStringList users)
+{
+    QString fixedPath = path.remove(0,8); //remove "file:///"
+
+    net::Package item;
+    item.setSender(title + net::Package::delimiter() + m_user->email());
+    item.setType(net::Package::CreateConversation);
+    item.setDestinations(users);
+    item.setData(ImageSerializer::toBase64(fixedPath));
 
     m_connection.sendPackage(item);
 }
@@ -347,19 +380,7 @@ void Client::qmlNotifyUnreadMessage(QString sender)
         emit notifyMessage(sender);
 }
 
-void Client::authorize(QString username, QByteArray base64)
-{
 
-    QString path = QDir::currentPath()
-            //+ QDir::separator()
-            + QLatin1String("/downloads/")
-            //+ QDir::separator()
-            + username + "_avatar.png";
-
-    ImageSerializer::fromBase64(base64,path);
-    m_user->setUsername(username);
-    m_user->setImageUrl(path);
-}
 
 UserData *Client::getUser() const
 {
@@ -437,9 +458,9 @@ void Client::packageRecieved(net::Package package)
         break;
 
     case net::Package::AUTH_REQUEST: //Ответ на авторизацию Данные пустые = фейл
-        if(!data.isEmpty() && !package.destinations().empty() && package.sender() == "")
+        if(!data.isEmpty() && !package.destinations().empty() && package.sender() != "")
         {
-            authorize(package.destinations().first(), data);
+            authorize(package.sender(),package.destinations().first(), data);
             emit authSuccsess();
             getContactsList();
         }
@@ -461,6 +482,13 @@ void Client::packageRecieved(net::Package package)
     case net::Package::DOCUMENT:
         newDocument(package.sender() + net::Package::delimiter() + data); //nick$$$filename$$$time$$$doc
         break;
+    case net::Package::GROUP_MESSAGE_HISTORY:
+        loadConversationList(package.data().toStringList());
+        break;
+    case net::Package::AddtoConversation:
+        break;
+    case net::Package::CreateConversation:
+        break;
     }
 }
 
@@ -475,4 +503,26 @@ void Client::loadContactsList(const QStringList &json)
         qDebug() << Q_FUNC_INFO << "Invoking addContact";
         addContact(contact);
     }
+}
+
+void Client::loadConversationList(const QStringList &json)
+{
+    //ID$$$title$$$AvatarRaw$$$creatorEmail$$$size$$$userdata
+//    foreach(QString item, json)
+//    {
+//        QStringList data = item.split(net::Package::delimiter());
+//        int id = data.at(0).toInt();
+//        QString title = data.at(1);
+//        QString avatar = data.at(2);
+//        QString creator_email = data.at(3);
+//        int size = data.at(4).toInt();
+//        for(int i = 5; i < size/3;i+=3) //email$$$nickname$$$avataUrl
+//        {
+//            QString email = data.at(i);
+//            QString nickname = data.at(i+1);
+//            QString userAvatar = data.at(i+2);
+//        }
+
+//    }
+
 }

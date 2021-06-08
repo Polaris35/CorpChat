@@ -45,6 +45,7 @@ Column {
             }
             MouseArea {
                 anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     imageClick(messageImage.source)
                 }
