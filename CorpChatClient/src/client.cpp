@@ -80,6 +80,19 @@ void Client::authorize(QString username, QString email, QByteArray base64)
     m_user->setImageUrl(path);
 }
 
+ContactsChooseModel *Client::contactsChooseModel() const
+{
+    return m_contactsChooseModel;
+}
+
+void Client::setContactsChooseModel(ContactsChooseModel *contactsChooseModel)
+{
+    if(m_contactsChooseModel)
+        m_contactsChooseModel->disconnect(this);
+
+    m_contactsChooseModel = contactsChooseModel;   
+}
+
 void Client::sendMessage(QString text)
 {
     net::Package package;
@@ -218,10 +231,13 @@ void Client::addContact(const QString &contactData)
 {
     //email+nick+avatar+isRead
     Contact item;
+    ChooseContact item1;
     QStringList data = contactData.split(net::Package::delimiter());
 
     item.email = data.at(0);
+    item1.email = data.at(0);
     item.nickname = data.at(1);
+    item1.nickname = data.at(1);
 
     QString format = data.at(2).split("%%%").first();
 
@@ -232,6 +248,10 @@ void Client::addContact(const QString &contactData)
             + item.email + "_avatar." + format;
 
     item.imageUrl = path;
+    item1.imageUrl = path;
+
+
+    item1.isChosen = false;
 
     QByteArray imgRaw = data.at(2).toLocal8Bit();
 
@@ -239,6 +259,7 @@ void Client::addContact(const QString &contactData)
 
     ImageSerializer::fromBase64(imgRaw,path);
     contactsModel()->append(item);
+    contactsChooseModel() -> append(item1);
 
     if(data.count() == 5)
         if(data.at(3).toInt() == 1) {
@@ -361,8 +382,10 @@ void Client::requestContact(QString email)
     m_connection.sendPackage(item);
 }
 
-void Client::createConversation(QString title, QString path, QStringList users)
+void Client::createConversation(QString title, QString path)
 {
+    QStringList users;
+    users.append(contactsChooseModel()->list()->getCheckedUser());
     QString fixedPath = path.remove(0,8); //remove "file:///"
 
     net::Package item;
@@ -411,6 +434,7 @@ void Client::start(QString hostIp, quint64 port)
     m_connection.connectToHost(hostIp, port);
     qDebug() << "Client started on " << hostIp << port;
 }
+
 
 MessagesModel *Client::messagesModel() const
 {
@@ -483,11 +507,12 @@ void Client::packageRecieved(net::Package package)
         newDocument(package.sender() + net::Package::delimiter() + data); //nick$$$filename$$$time$$$doc
         break;
     case net::Package::GROUP_MESSAGE_HISTORY:
-        loadConversationList(package.data().toStringList());
+
         break;
     case net::Package::AddtoConversation:
         break;
     case net::Package::CreateConversation:
+        loadConversationList(package.data().toStringList());
         break;
     }
 }

@@ -1,4 +1,4 @@
-#include <QGuiApplication>
+﻿#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QFontDatabase>
 #include <QQmlContext>
@@ -13,6 +13,7 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonObject>
+#include <QSortFilterProxyModel>
 
 #include "include/client.h"
 #include "include/contactslist.h"
@@ -20,6 +21,8 @@
 #include "include/messageslist.h"
 #include "include/messagesmodel.h"
 #include "include/userdata.h"
+#include "include/choosecontactlist.h"
+#include "include/contactchoosemodel.h"
 
 int main(int argc, char *argv[])
 {
@@ -43,6 +46,15 @@ int main(int argc, char *argv[])
     messagesModel.setList(&messagesList);
     client.setMessagesModel(&messagesModel);
 
+    ChooseContactsList chooseContactList;
+    ContactsChooseModel contactChooseModel;
+    contactChooseModel.setList(&chooseContactList);
+    client.setContactsChooseModel(&contactChooseModel);
+
+    QSortFilterProxyModel contactChooseproxyModel;
+    contactChooseproxyModel.setSourceModel(&contactChooseModel);
+    contactChooseproxyModel.setSortRole(ContactsChooseModel::NicknameRole);
+
     UserData user;
     client.setUser(&user);
 
@@ -65,10 +77,12 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("applicationDirPath", QGuiApplication::applicationDirPath());
     qmlRegisterType<ContactsModel>("corpchat.models.contactsModel",1,0,"ContactsModel");
     qmlRegisterType<MessagesModel>("corpchat.models.messagesModel",1,0,"MessagesModel");
+    qmlRegisterType<ContactsChooseModel>("corpchat.models.contactschooseModel",1,0,"ContactsChooseModel");
     qmlRegisterType<Client>("corpchat.net.client",1,0,"Client");
 
     engine.rootContext()->setContextProperty("contactsModel", &contactsModel);
     engine.rootContext()->setContextProperty("messagesModel", &messagesModel);
+    engine.rootContext()->setContextProperty("contactChooseModel", &contactChooseproxyModel);
     engine.rootContext()->setContextProperty("client", &client);
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));

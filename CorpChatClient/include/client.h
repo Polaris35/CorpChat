@@ -14,6 +14,7 @@
 #include "include/package.h"
 #include "include/imageserializer.h"
 #include "include/DocumentSerializer.h"
+#include "contactchoosemodel.h"
 //#include "userdata.h"
 //#include "contactsmodel.h"
 
@@ -33,6 +34,9 @@ public:
     MessagesModel *messagesModel() const;
     void setMessagesModel(MessagesModel *messagesModel);
 
+    ContactsChooseModel *contactsChooseModel() const;
+    void setContactsChooseModel(ContactsChooseModel *contactsChooseModel);
+
     UserData *getUser() const;
     void setUser(UserData *user);
 
@@ -40,7 +44,9 @@ public:
 
     void start();
     void start(QString hostIp, quint64 port);
-public slots:
+
+
+public slots:    
     void registerNewUser(QString username,QString email, QString password, QString imgUrl);
     void authorize(QString email, QString password);
 
@@ -56,11 +62,11 @@ public slots:
     void loadMessageHistory(const QStringList &json);
 
     void requestContact(QString email);
-    void createConversation(QString title,QString path, QStringList users);
+    void createConversation(QString title,QString path);
 
     void qmlNotifyUnreadMessage(QString sender);
 private slots:
-    void packageRecieved(net::Package package);
+    void packageRecieved(net::Package package);    
 signals:
     void registerSuccess();
     void registerFailure();
@@ -84,6 +90,8 @@ private:
     net::Connection m_connection;
     ContactsModel *m_contactsModel;
     MessagesModel *m_messagesModel;
+    ContactsChooseModel *m_contactsChooseModel;
+
     QStringList m_toNotify;
 };
 

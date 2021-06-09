@@ -15,7 +15,8 @@ SOURCES += \
         src/contactsmodel.cpp \
         src/messageslist.cpp \
         src/messagesmodel.cpp \
-		src/userdata.cpp
+		src/userdata.cpp \
+		src/choosecontactlist.cpp
 
 RESOURCES += qml.qrc
 
@@ -42,6 +43,7 @@ INCLUDEPATH += $$PWD/../CorpChatNetworkLib
 DEPENDPATH += $$PWD/../CorpChatNetworkLib
 
 HEADERS += \
+    include/choosecontactlist.h \
     include/client.h \
     include/contactchoosemodel.h \
     include/contactslist.h \

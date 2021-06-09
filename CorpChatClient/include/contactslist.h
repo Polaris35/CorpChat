@@ -9,7 +9,7 @@ struct Contact
     QString imageUrl;
 
     bool operator==(const Contact& other)
-    {return this->nickname == other.nickname;}
+    {return this->email == other.email;}
 };
 
 class ContactsList : public QObject

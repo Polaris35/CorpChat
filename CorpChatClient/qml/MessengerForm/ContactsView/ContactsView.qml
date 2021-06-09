@@ -71,7 +71,7 @@ ListView {
                     color: Material.background
                     Text {
                         anchors.centerIn: parent
-                        text: qsTr("Новый беседа")
+                        text: qsTr("Новая беседа")
                         color: Material.accent
                         font.pixelSize: 15
                         font.bold: true

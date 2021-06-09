@@ -57,8 +57,8 @@ public:
         QByteArray imgRaw = QByteArray::fromBase64(raw);
         QDir dir(QDir::currentPath());
 
-        if(!QDir(QDir::currentPath() + QDir::separator() + "images").exists())
-            if(!dir.mkdir("images"))
+        if(!QDir(QDir::currentPath() + QDir::separator() + "downloads").exists())
+            if(!dir.mkdir("downloads"))
                 qFatal("Can't create sub-dir!!!");
 
 
