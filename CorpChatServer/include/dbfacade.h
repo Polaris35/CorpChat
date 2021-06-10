@@ -30,6 +30,7 @@ public:
     bool newConversation(const QString &user1, const QString &user2);
     bool createConversation(const QString& title, const QString& creator_email, QStringList users, QString path);
     QString getConversationData(const int& id);
+	QStringList getConversationUsers(const int&id);
     bool addUserToConversation(const int& conversation_id, const int& user_id);
 
 
@@ -37,12 +38,27 @@ public:
     QString userNickname(QString email);
     QString userImage(QString email); //returns avatar Url from db
 
+
+	void newMessage(const QString &sender,
+					const int &id_conversation,
+					const QString& text,
+					const QString &dateTime);
     void newMessage(const QString &sender,
                     const QStringList &recievers,
                     const QString& text,
                     const QString &dateTime);
     void newImage(const QString &sender,
+                 const int &id_conversation,
+                  const QString& filename,
+                 const QByteArray& image,
+                 const QString &dateTime);
+    void newImage(const QString &sender,
                  const QStringList &recievers,
+                  const QString& filename,
+                 const QByteArray& image,
+                 const QString &dateTime);
+    void newDocument(const QString &sender,
+                 const int &id_conversation,
                   const QString& filename,
                  const QByteArray& image,
                  const QString &dateTime);

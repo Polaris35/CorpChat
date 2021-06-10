@@ -28,6 +28,7 @@ public:
 	QString type() const;
     Q_INVOKABLE QString currentDialog() const;
     Q_INVOKABLE QString currentAvatar() const;
+    Q_INVOKABLE QString currentType() const;
     // QAbstractItemModel interface
 public:
     int rowCount(const QModelIndex &parent) const override;
@@ -40,6 +41,7 @@ public:
 
 public slots:
     void indexChanged(int idx);
+    void indexChangedGroup(int idx);
 signals:
     void selectedChanged(int idx);
     void selectedChangedGroup(int idx);

@@ -22,6 +22,7 @@ ListView {
     spacing: 10
     highlight: delegateHighlight
     signal selectedChanged(int idx)
+    signal selectedChangedGroup(int idx)
     header: Component {
 
         //anchors.topMargin: 5
@@ -138,6 +139,7 @@ ListView {
     delegate: chooser
     Component.onCompleted: {
         selectedChanged.connect(contactsModel.indexChanged)
+        selectedChangedGroup.connect(contactsModel.indexChangedGroup)
         //        list.currentIndex = 0
     }
     DelegateChooser {
@@ -183,7 +185,7 @@ ListView {
                 onClick: {
                     list.currentIndex = index
                     console.log("selected delegate #" + index)
-                    selectedChanged(index)
+                    selectedChangedGroup(index)
                 }
 
                 Connections {

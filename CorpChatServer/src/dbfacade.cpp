@@ -260,7 +260,7 @@ QStringList DBFacade::messageHistory(const int &conversation_id)
     QSqlQuery query(*m_db);
     query.prepare("SELECT u.email, m.created_at, m.message, m.message_type,m.id "
                   "FROM messages m "
-                  "INNER JOIN useres u ON m.id_sender = u.id"
+                  "INNER JOIN useres u ON m.id_sender = u.id "
                   "WHERE id_conversation = :id");
 
     query.bindValue(":id",conversation_id);
@@ -511,6 +511,24 @@ QString DBFacade::getConversationData(const int &conversation_id)
     return data;
 }
 
+QStringList DBFacade::getConversationUsers(const int &id)
+{
+    QSqlQuery query(*m_db);
+    QStringList rezult;
+    query.prepare("SELECT u.email FROM participants "
+                  "INNER JOIN useres u ON participants.id_useres = u.id WHERE id_conversation = :id");
+    query.bindValue(":id",id);
+    if(!query.exec()){
+        qDebug() << Q_FUNC_INFO << query.lastError().text();
+        return QStringList{};
+    }
+    while (query.next()) {
+        rezult.append(query.value(0).toString());
+    }
+    qDebug() << "Conversation has users = " << rezult.size();
+    return rezult;
+}
+
 bool DBFacade::addUserToConversation(const int &conversation_id, const int &user_id)
 {
     QSqlQuery query(*m_db);
@@ -584,6 +602,25 @@ QString DBFacade::userImage(QString email)
     }
 }
 
+void DBFacade::newMessage(const QString &sender, const int &id_conversation, const QString &text, const QString &dateTime)
+{
+    QSqlQuery query(*m_db);
+    query.prepare("INSERT INTO messages (id_sender, id_conversation, message, message_type, created_at, deleted_at) "
+                  "VALUES (:sender,:conversation,:text,:type,:datetime,:deletedat)");
+    query.bindValue(":text", text);
+    query.bindValue(":type","text");
+    query.bindValue(":datetime", QDateTime::fromString(dateTime));
+    query.bindValue(":deletedat", QVariant());
+    query.bindValue(":sender", userID(sender));
+    query.bindValue(":conversation",id_conversation);
+
+    qDebug() << text << sender /*<< recievers.first()*/;
+    bool ok = query.exec();
+    if(!ok) {
+        qWarning() << Q_FUNC_INFO << query.lastError().number();
+    }
+}
+
 void DBFacade::newMessage(const QString &sender, const QStringList &recievers, const QString &text, const QString &dateTime)
 {
 
@@ -611,6 +648,45 @@ void DBFacade::newMessage(const QString &sender, const QStringList &recievers, c
     bool ok = query.exec();
     if(!ok) {
         qWarning() << Q_FUNC_INFO << query.lastError().number();
+    }
+}
+
+void DBFacade::newImage(const QString &sender, const int &id_conversation, const QString &filename, const QByteArray &image, const QString &dateTime)
+{
+    QSqlQuery query(*m_db);
+
+    query.prepare("INSERT INTO messages (id_sender, id_conversation, message_type, created_at, deleted_at) "
+                  "VALUES (:sender,:conversation,:type,:datetime,:deletedat)");
+    query.bindValue(":type","image");
+    query.bindValue(":datetime", QDateTime::fromString(dateTime));
+    query.bindValue(":deletedat", QVariant());
+    query.bindValue(":sender", userID(sender));
+    query.bindValue(":conversation",id_conversation);
+
+    bool ok = query.exec();
+    if(!ok) {
+        qWarning() << Q_FUNC_INFO << query.lastError().text();
+    }
+
+    QVariant id = query.lastInsertId();
+
+    query.finish();
+
+    qDebug() << "image in message column  has id:" << id.toInt();
+
+    QString path = QDir::currentPath() + QDir::separator() + "downloads" + QDir::separator() +
+            QUuid::createUuid().toString().remove('{').remove('}') + "_" + filename;
+
+    ImageSerializer::fromBase64(image,path);
+
+    query.prepare("INSERT INTO attachments  (id_message,url) VALUES(:id, :url);");
+
+    query.bindValue(":url", path);
+    query.bindValue(":id",id.toInt());
+
+    ok = query.exec();
+    if(!ok) {
+        qWarning() << Q_FUNC_INFO << query.lastError().text();
     }
 }
 
@@ -666,6 +742,45 @@ void DBFacade::newImage(const QString &sender, const QStringList &recievers,
         if(!ok) {
             qWarning() << Q_FUNC_INFO << query.lastError().text();
         }
+}
+
+void DBFacade::newDocument(const QString &sender, const int &id_conversation, const QString &filename, const QByteArray &document, const QString &dateTime)
+{
+    QSqlQuery query(*m_db);
+
+    query.prepare("INSERT INTO messages (id_sender, id_conversation, message_type, created_at, deleted_at) "
+                  "VALUES (:sender,:conversation,:type,:datetime,:deletedat)");
+    query.bindValue(":type","image");
+    query.bindValue(":datetime", QDateTime::fromString(dateTime));
+    query.bindValue(":deletedat", QVariant());
+    query.bindValue(":sender", userID(sender));
+    query.bindValue(":conversation",id_conversation);
+
+    bool ok = query.exec();
+    if(!ok) {
+        qWarning() << Q_FUNC_INFO << query.lastError().text();
+    }
+
+    QVariant id = query.lastInsertId();
+
+    query.finish();
+
+    qDebug() << "file in message column  has id:" << id.toInt();
+
+    QString path = QDir::currentPath() + QDir::separator() + "downloads" + QDir::separator() +
+            QUuid::createUuid().toString().remove('{').remove('}') + "+" + filename;
+
+    DocumentSerializer::fromByte(document,path);
+
+    query.prepare("INSERT INTO attachments  (id_message,url) VALUES(:id, :url);");
+
+    query.bindValue(":url", path);
+    query.bindValue(":id",id.toInt());
+
+    ok = query.exec();
+    if(!ok) {
+        qWarning() << Q_FUNC_INFO << query.lastError().text();
+    }
 }
 
 void DBFacade::newDocument(const QString &sender, const QStringList &recievers,

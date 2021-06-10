@@ -11,6 +11,13 @@ void ContactsModel::indexChanged(int idx)
     emit selectedChanged(m_currentIndex);
 }
 
+void ContactsModel::indexChangedGroup(int idx)
+{
+    qDebug() << Q_FUNC_INFO << "selected index = " << idx;
+    m_currentIndex = idx;
+    emit selectedChangedGroup(m_currentIndex);
+}
+
 int ContactsModel::currentIndex() const
 {
     return m_currentIndex;
@@ -26,6 +33,13 @@ QString ContactsModel::currentAvatar() const
 {
     return data(this->index(currentIndex()),Roles::ImageRole).toString();
 }
+
+QString ContactsModel::currentType() const
+{
+    return data(this->index(currentIndex()),Roles::TypeRole).toString();
+}
+
+
 
 ContactsModel::ContactsModel(QObject *parent)
     : QAbstractListModel(parent)

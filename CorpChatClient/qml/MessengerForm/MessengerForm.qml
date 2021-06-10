@@ -6,14 +6,17 @@ import QtQuick.Layouts 1.12
 import Qt.labs.qmlmodels 1.0
 import QtQuick.Dialogs 1.2
 import GlobalQmlSettings 1.0
-import MessengerForm.MessageInputField 1.0
-import MessengerForm.MessagesView 1.0
-import MessengerForm.ContactsView 1.0
 
 import corpchat.models.contactsModel 1.0
 import corpchat.models.messagesModel 1.0
 
 import corpchat.models.contactschooseModel 1.0
+
+import MessengerForm.MessageInputField 1.0
+import MessengerForm.MessagesView 1.0
+import MessengerForm.ContactsView 1.0
+
+
 
 Rectangle {
     id: root

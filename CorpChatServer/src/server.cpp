@@ -58,7 +58,7 @@ void Server::newPackage(const net::Package &package)
     case net::Package::IMAGE: // Send images to user
         sendImage(package);
         break;
-    case net::Package::DOCUMENT: // Send docs to user        
+    case net::Package::DOCUMENT: // Send docs to user
         sendDocument(package);
         break;
     case net::Package::CreateConversation:
@@ -92,8 +92,8 @@ void Server::registerUser(net::Package package, net::Connection *connection)
 
     qDebug() << "PW: " << password;
 
-    QString path = QDir::currentPath()            
-            + QLatin1String("/downloads/")            
+    QString path = QDir::currentPath()
+            + QLatin1String("/downloads/")
             + email + "_avatar." + format;
 
     ImageSerializer::fromBase64(package.data().toByteArray(),path);
@@ -147,7 +147,7 @@ void Server::sendMessageHistory(const QString& to, const int &conversation_id)
     QStringList messageHistory = m_database->messageHistory(conversation_id);
 
     net::Package item;
-    item.setSender("");
+    item.setSender(QString::number(conversation_id));
     item.setType(net::Package::GROUP_MESSAGE_HISTORY);
     item.setDestinations({to});
     item.setData(messageHistory);
@@ -206,12 +206,12 @@ void Server::sendConversationList(QString user)
     QStringList data;
     foreach(int id, ids)
     {//id+title+url+emailCreator+size+email+nickname+avatar
-        QStringList temp(m_database->getConversationData(id).split(net::Package::delimiter()));                
+        QStringList temp(m_database->getConversationData(id).split(net::Package::delimiter()));
         QString rezult = QString::number(id);
         qDebug() << "Conversation id = " << rezult;
         for(QString str: temp)
-            rezult += net::Package::delimiter() + str;                            
-        data.append(rezult);//ID$$$title$$$AvatarPath$$$creatorEmail$$$size$$$userdata        
+            rezult += net::Package::delimiter() + str;
+        data.append(rezult);//ID$$$title$$$AvatarPath$$$creatorEmail$$$size$$$userdata
     }
     for(QString tem: data)
     {
@@ -232,59 +232,130 @@ void Server::sendConversationList(QString user)
 
 void Server::sendMessage(const net::Package &package)
 {
-    QString sender = package.sender();
-    QStringList destinations = package.destinations();
-    QStringList data = package.data().toString().split(net::Package::delimiter());
-    QString dateTime = data.first();
-    QString text = data.last();
-    m_database->newMessage(sender,destinations,text,dateTime);
-
-    foreach(QString dest, destinations) {
-        if(m_clients.contains(dest)) {
-            m_clients.value(dest)->sendPackage(package);
+    QString sender;
+    QStringList destinations;
+    QStringList data;
+    QString dateTime;
+    QString text;
+    if(package.sender().split(net::Package::delimiter()).last() != "multiple") {
+        sender = package.sender().split(net::Package::delimiter()).first();
+        destinations = package.destinations();
+        data = package.data().toString().split(net::Package::delimiter());
+        dateTime = data.first();
+        text = data.last();
+        m_database->newMessage(sender,destinations,text,dateTime);
+        foreach(QString dest, destinations) {
+            if(m_clients.contains(dest)) {
+                m_clients.value(dest)->sendPackage(package);
+            }
         }
     }
+    else
+    {
+        sender = package.sender().split(net::Package::delimiter()).first();
+        destinations = package.destinations();
+        data = package.data().toString().split(net::Package::delimiter());
+        dateTime = data.first();
+        text = data.last();
+        m_database->newMessage(sender,destinations.first().toInt(),text,dateTime);
+        foreach(QString dest, m_database->getConversationUsers(destinations.first().toInt())) {
+            if(m_clients.contains(dest)) {
+                m_clients.value(dest)->sendPackage(package);
+            }
+        }
+    }
+
 }
 
 void Server::sendImage(const net::Package &package)
 {
-    QString sender = package.sender();
-    QStringList destinations = package.destinations();
-    QStringList data = package.data().toString().split(net::Package::delimiter());
-    QString filename = data.at(0);
-    qDebug() << Q_FUNC_INFO << "filename is:" << filename;
-    QString dateTime = data.at(1);
-    QByteArray image = data.at(2).toUtf8();
-    m_database->newImage(sender,destinations,filename,image,dateTime);
 
-    foreach(QString dest, destinations) {
-        if(m_clients.contains(dest)) {
-            m_clients.value(dest)->sendPackage(package);
+    QString sender;
+    QStringList destinations;
+    QStringList data;
+    QString filename;
+    QString dateTime;
+    QByteArray image;
+    if(package.sender().split(net::Package::delimiter()).last() != "multiple") {
+        sender = package.sender().split(net::Package::delimiter()).first();
+        destinations = package.destinations();
+        data = package.data().toString().split(net::Package::delimiter());
+        filename = data.at(0);
+        qDebug() << Q_FUNC_INFO << "filename is:" << filename;
+        dateTime = data.at(1);
+        image = data.at(2).toUtf8();
+        m_database->newImage(sender,destinations,filename,image,dateTime);
+        foreach(QString dest, destinations) {
+            if(m_clients.contains(dest)) {
+                m_clients.value(dest)->sendPackage(package);
+            }
+        }
+    }
+    else
+    {
+        sender = package.sender().split(net::Package::delimiter()).first();
+        destinations = package.destinations();
+        data = package.data().toString().split(net::Package::delimiter());
+        dateTime = data.first();
+        filename = data.at(0);
+        qDebug() << Q_FUNC_INFO << "filename is:" << filename;
+        dateTime = data.at(1);
+        image = data.at(2).toUtf8();
+        m_database->newImage(sender,destinations.first().toInt(),filename,image,dateTime);
+        foreach(QString dest, m_database->getConversationUsers(destinations.first().toInt())) {
+            if(m_clients.contains(dest)) {
+                m_clients.value(dest)->sendPackage(package);
+            }
         }
     }
 }
 
 void Server::sendDocument(const net::Package &package)
 {
-    QString sender = package.sender();
-    QStringList destinations = package.destinations();
-    QStringList data = package.data().toString().split(net::Package::delimiter());
-    QString filename = data.at(0);
-    qDebug() << Q_FUNC_INFO << "filename is:" << filename;
-    QString dateTime = data.at(1);
-    QByteArray image = data.at(2).toUtf8();
-    m_database->newDocument(sender,destinations,filename,image,dateTime);
+    QString sender;
+    QStringList destinations;
+    QStringList data;
+    QString filename;
+    QString dateTime;
+    QByteArray image;
 
-    foreach(QString dest, destinations) {
-        if(m_clients.contains(dest)) {
-            m_clients.value(dest)->sendPackage(package);
+    if(package.sender().split(net::Package::delimiter()).last() != "multiple") {
+        sender = package.sender().split(net::Package::delimiter()).first();
+        destinations = package.destinations();
+        data = package.data().toString().split(net::Package::delimiter());
+        filename = data.at(0);
+        qDebug() << Q_FUNC_INFO << "filename is:" << filename;
+        dateTime = data.at(1);
+        image = data.at(2).toUtf8();
+        m_database->newDocument(sender,destinations,filename,image,dateTime);
+        foreach(QString dest, destinations) {
+            if(m_clients.contains(dest)) {
+                m_clients.value(dest)->sendPackage(package);
+            }
         }
     }
+
+    else {
+        sender = package.sender().split(net::Package::delimiter()).first();
+        destinations = package.destinations();
+        data = package.data().toString().split(net::Package::delimiter());
+        filename = data.at(0);
+        qDebug() << Q_FUNC_INFO << "filename is:" << filename;
+        dateTime = data.at(1);
+        image = data.at(2).toUtf8();
+        m_database->newDocument(sender,destinations.first().toInt(),filename,image,dateTime);
+        foreach(QString dest, m_database->getConversationUsers(destinations.first().toInt())) {
+            if(m_clients.contains(dest)) {
+                m_clients.value(dest)->sendPackage(package);
+            }
+        }
+    }
+
 }
 
 void Server::CreateConversation(const net::Package &package)
 {
-     // title+sender
+    // title+sender
     QStringList raw = package.sender().split(net::Package::delimiter());
     QString title = raw.first();
     QString creator = raw.last();

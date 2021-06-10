@@ -9,6 +9,7 @@ import GlobalQmlSettings 1.0
 import Authentication.LoginForm 1.0
 import Authentication.RegisterForm 1.0
 import MessengerForm 1.0
+import AdminPanel 1.0
 
 ApplicationWindow {
     id: root
@@ -26,10 +27,17 @@ ApplicationWindow {
     StackView {
         id: stackView
         anchors.fill: parent
-        initialItem: loginFormStackComponent
+        initialItem: /*adminPanel*/ loginFormStackComponent
         property real offset: 10
         Component {
-            id: mainFormStackComponent            
+            id: adminPanel
+            AdminPanel {
+                anchors.fill: parent
+            }
+        }
+
+        Component {
+            id: mainFormStackComponent
             MessengerForm {
                 id: mainForm
                 anchors.fill: parent

@@ -56,5 +56,7 @@
         <file>qml/icons/iconfinder_314807_search_icon.svg</file>
         <file>qml/icons/check-mark.svg</file>
         <file>qml/MessengerForm/ContactsView/GroupChatDelegate.qml</file>
+        <file>qml/AdminPanel/AdminPanel.qml</file>
+        <file>qml/AdminPanel/qmldir</file>
     </qresource>
 </RCC>
