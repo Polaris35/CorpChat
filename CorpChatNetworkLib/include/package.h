@@ -26,7 +26,7 @@ public:
         CreateConversation,
         AddtoConversation,
         GROUP_MESSAGE_HISTORY,
-        CONVERSATION_REQUEST
+        CONVERSATION_LIST
     };
     Q_ENUM(DataType)
 public:

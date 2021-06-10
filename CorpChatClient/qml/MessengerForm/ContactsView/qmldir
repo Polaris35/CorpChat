@@ -1,4 +1,5 @@
 module ContactsView
 depends MessengerForm.RoundImage 1.0
 ContactsDelegate 1.0 ContactsDelegate.qml
+GroupChatDelegate 1.0 GroupChatDelegate.qml
 ContactsView 1.0 ContactsView.qml

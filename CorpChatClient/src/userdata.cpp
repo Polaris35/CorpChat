@@ -36,3 +36,4 @@ void UserData::setEmail(const QString &email)
 {
     m_email = email;
 }
+

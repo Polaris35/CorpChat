@@ -68,9 +68,10 @@ void Server::newPackage(const net::Package &package)
         addUsersToConversation(package.data().toInt(), package.destinations());
         break;
     case net::Package::GROUP_MESSAGE_HISTORY: // возвращает историю сообщений для групового чата
-        sendMessageHistory(package.sender(), package.data().toInt());
+        sendMessageHistory(package.sender(), package.destinations().first().toInt());
         break;
-    case net::Package::CONVERSATION_REQUEST: // отправляем все груповые чаты в которых есть пользователь
+    case net::Package::CONVERSATION_LIST: // отправляем все груповые чаты в которых есть пользователь
+        sendConversationList(package.sender());
         break;
     }
 }
@@ -204,21 +205,25 @@ void Server::sendConversationList(QString user)
     QList<int> ids = m_database->conversationList(user);
     QStringList data;
     foreach(int id, ids)
+    {//id+title+url+emailCreator+size+email+nickname+avatar
+        QStringList temp(m_database->getConversationData(id).split(net::Package::delimiter()));                
+        QString rezult = QString::number(id);
+        qDebug() << "Conversation id = " << rezult;
+        for(QString str: temp)
+            rezult += net::Package::delimiter() + str;                            
+        data.append(rezult);//ID$$$title$$$AvatarPath$$$creatorEmail$$$size$$$userdata        
+    }
+    for(QString tem: data)
     {
-        QStringList temp(m_database->getConversationData(id).split(net::Package::delimiter()));
-        temp[0] = QString::number(id) +
-                net::Package::delimiter() + temp.at(0);
-        temp[1] = ImageSerializer::toBase64(temp.at(1));
-        QString rezult = "";
-        foreach(const QString& str, temp)
-            rezult += str;
-        data.append(temp);//ID$$$title$$$AvatarPath$$$creatorEmail$$$size$$$userdata
+        QFile file("rezult.txt");
+        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+        file.write(tem.toStdString().c_str());
     }
     qDebug() << Q_FUNC_INFO << "conversation list have size: " << data.size();
 
     net::Package item;
     item.setSender("");
-    item.setType(net::Package::GROUP_MESSAGE_HISTORY);
+    item.setType(net::Package::CONVERSATION_LIST);
     item.setDestinations({user});
     item.setData(data);
 
@@ -294,6 +299,7 @@ void Server::CreateConversation(const net::Package &package)
     if(m_database->createConversation(title, creator, users, path))
     {
         qDebug() << Q_FUNC_INFO << "conversation created succesfuly!";
+        sendConversationList(creator);
     }
 }
 

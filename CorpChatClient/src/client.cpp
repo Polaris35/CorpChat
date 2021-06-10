@@ -107,7 +107,7 @@ void Client::sendMessage(QString text)
 
     m_connection.sendPackage(package);
     //m_messagesModel->append(Message{m_user->username(), text, currentTime});
-    newMessage(package.sender(),currentTime,text);
+    newMessage(package.sender(),package.destinations().first(),currentTime,text);
 }
 
 void Client::sendImage(QString url)
@@ -178,6 +178,17 @@ void Client::getContactsList()
     m_connection.sendPackage(package);
 }
 
+void Client::getConversationList()
+{
+    net::Package package;
+    package.setSender(m_user->email());
+    package.setDestinations({""});
+    package.setType(net::Package::DataType::CONVERSATION_LIST);
+    package.setData({""}); //Don't need any data here. Placeholder for furher rework
+
+    m_connection.sendPackage(package);
+}
+
 void Client::getMessageHistory()
 {
     static QString lastSelect;
@@ -197,7 +208,56 @@ void Client::getMessageHistory()
     m_connection.sendPackage(package);
 }
 
+void Client::getMessageHistoryForGroupChat()
+{
+    static QString lastSelect;
+    QString user = m_contactsModel->currentDialog();
+    if(lastSelect == user) {
+        return;
+    } else {
+        lastSelect = user;
+    }
+    qDebug() << "Getting meesage history with conversation id = " << user;
+    net::Package package;
+    package.setSender(m_user->email());
+    package.setDestinations({user});
+    package.setType(net::Package::DataType::GROUP_MESSAGE_HISTORY);
+    package.setData("");
+
+    m_connection.sendPackage(package);
+}
+
 void Client::loadMessageHistory(const QStringList &json)
+{
+    if(!m_messagesModel)
+    {
+        return;
+    }
+    if(json.isEmpty()) {
+        qWarning() << Q_FUNC_INFO << "Array of message history is empty!";
+    }
+    m_messagesModel->reset();
+    qDebug() << json.size();
+    foreach(QString val, json)
+    {
+        QStringList list = val.split("###");
+        qDebug() << "list size :" << list.size();
+        if(list.at(0) == "text"){
+            newMessage(list.at(1));
+            //qDebug() << list.at(1);
+        }
+        else if(list.at(0) == "image"){
+            newImage(list.at(1));
+            qDebug() << "new Image in message history!";
+        }
+        else if(list.at(0) == "document"){
+            newDocument(list.at(1));
+            qDebug() << "new Document in message history!";
+        }
+    }
+}
+
+void Client::loadGroupMessageHistory(const QStringList &json)
 {
     if(!m_messagesModel)
     {
@@ -234,10 +294,14 @@ void Client::addContact(const QString &contactData)
     ChooseContact item1;
     QStringList data = contactData.split(net::Package::delimiter());
 
+    item.type = "single";
+
     item.email = data.at(0);
     item1.email = data.at(0);
     item.nickname = data.at(1);
     item1.nickname = data.at(1);
+
+
 
     QString format = data.at(2).split("%%%").first();
 
@@ -249,6 +313,9 @@ void Client::addContact(const QString &contactData)
 
     item.imageUrl = path;
     item1.imageUrl = path;
+
+    item.users = QList<ContactData>();
+
 
 
     item1.isChosen = false;
@@ -267,9 +334,10 @@ void Client::addContact(const QString &contactData)
         }
 }
 
-void Client::newMessage(QString sender, QString time, QString text)
+void Client::newMessage(QString sender, QString destination, QString time, QString text)
 {
-    if(sender == m_contactsModel->currentDialog() || sender == m_user->email())
+    if(sender == m_contactsModel->currentDialog() || sender == m_user->email() ||
+            m_contactsModel->currentDialog() == destination)
     {
         Message item;
         item.sender = sender;
@@ -322,13 +390,14 @@ void Client::newImage(QString sender, QString filename, QString time, QByteArray
 
 void Client::newMessage(QString raw)
 {
-    //"nickname$$$time$$$text$$$
+    //"email$$$time$$$text$$$
     QStringList data = raw.split(net::Package::delimiter());
     QString sender = data.at(0);
-    QString time = data.at(1);
-    QString text = data.at(2);
+    QString dest = data.at(1);
+    QString time = data.at(2);
+    QString text = data.at(3);
 
-    newMessage(sender,time,text);
+    newMessage(sender,dest,time,text);
 }
 
 void Client::newDocument(QString sender, QString filename, QString time, QByteArray base64)
@@ -460,6 +529,7 @@ void Client::setContactsModel(ContactsModel *contactsModel)
 
     m_contactsModel = contactsModel;
     connect(m_contactsModel, &ContactsModel::selectedChanged, this, &Client::getMessageHistory);
+    connect(m_contactsModel, & ContactsModel::selectedChangedGroup, this, &Client::getMessageHistoryForGroupChat);
 }
 
 
@@ -471,8 +541,8 @@ void Client::packageRecieved(net::Package package)
     {
     case net::Package::CONTACTS_LIST:
         //qDebug() << package.data();
-
         loadContactsList(package.data().toStringList());
+        getConversationList();
         break;
     case net::Package::REGISTRATION_REQUEST:
         if(data.startsWith("S"))
@@ -486,7 +556,8 @@ void Client::packageRecieved(net::Package package)
         {
             authorize(package.sender(),package.destinations().first(), data);
             emit authSuccsess();
-            getContactsList();
+            getContactsList();            
+
         }
         else
             emit authFailure();
@@ -498,7 +569,7 @@ void Client::packageRecieved(net::Package package)
         addContact(data);
         break;
     case net::Package::TEXT_MESSAGE: //Текстовое сообщение
-        newMessage(package.sender() + net::Package::delimiter() + data); //никнейм$$$время$$$текст
+        newMessage(package.sender()+ net::Package::delimiter() + package.destinations().first() + net::Package::delimiter() + data); //никнейм$$$destinations$$$время$$$текст
         break;
     case net::Package::IMAGE:
         newImage(package.sender() + net::Package::delimiter() + data); //nick$$$filename$$$time$$$image
@@ -507,11 +578,13 @@ void Client::packageRecieved(net::Package package)
         newDocument(package.sender() + net::Package::delimiter() + data); //nick$$$filename$$$time$$$doc
         break;
     case net::Package::GROUP_MESSAGE_HISTORY:
-
+        loadGroupMessageHistory(package.data().toStringList());
         break;
     case net::Package::AddtoConversation:
         break;
     case net::Package::CreateConversation:
+        break;
+    case net::Package::CONVERSATION_LIST:
         loadConversationList(package.data().toStringList());
         break;
     }
@@ -532,22 +605,47 @@ void Client::loadContactsList(const QStringList &json)
 
 void Client::loadConversationList(const QStringList &json)
 {
-    //ID$$$title$$$AvatarRaw$$$creatorEmail$$$size$$$userdata
-//    foreach(QString item, json)
-//    {
-//        QStringList data = item.split(net::Package::delimiter());
-//        int id = data.at(0).toInt();
-//        QString title = data.at(1);
-//        QString avatar = data.at(2);
-//        QString creator_email = data.at(3);
-//        int size = data.at(4).toInt();
-//        for(int i = 5; i < size/3;i+=3) //email$$$nickname$$$avataUrl
-//        {
-//            QString email = data.at(i);
-//            QString nickname = data.at(i+1);
-//            QString userAvatar = data.at(i+2);
-//        }
+    //id+title+url+emailCreator+size+email+nickname+avatar
+    foreach(QString item, json)
+    {
+        Contact item1;
+        item1.type = "multiple";
+        QStringList data = item.split(net::Package::delimiter());
+        qDebug() << Q_FUNC_INFO << "conversation list have size: " << data.size();
 
-//    }
+        QFile file("rezult.txt");
+        file.open(QIODevice::WriteOnly | QIODevice::Truncate);
+        file.write(data.at(1).toStdString().c_str());
+        int id = data.at(0).toInt();
+        item1.email = QString::number(id);
+        QString title = data.at(1);
+        item1.nickname = title;
+        QString avatar = data.at(2);
+        qDebug() << Q_FUNC_INFO << "Conversation title = " << title << " avatar format = " << avatar.split("%%%").first();
+        QString path = QDir::currentPath() + QLatin1String("/downloads/") +
+                "Conversation_avatar_" + QString::number(id) + "." + avatar.split("%%%").first();
+
+        ImageSerializer::fromBase64(avatar.toUtf8(),path);
+
+        item1.imageUrl = path;
+
+        QString creator_email = data.at(3);
+        int size = data.at(4).toInt();
+        item1.creator_email = creator_email;
+
+        for(int i = 5; i <= size - 1; i += 3) //email$$$nickname$$$avataUrl
+        {
+            ContactData user;
+            user.setEmail(data.at(i));
+            user.setUsername(data.at(i + 1));
+            QString path1 = QDir::currentPath() + QLatin1String("/downloads/") + user.email() +
+                    "_avatar." + avatar.split("%%%").first();
+            ImageSerializer::fromBase64(data.at(i + 2).toUtf8(),path1);
+            user.setImageUrl(path1);
+            item1.users.append(user);
+        }
+
+        contactsModel()->append(item1);
+    }
 
 }

@@ -8,15 +8,7 @@ struct Message
     QString data;
     QString timeStamp;
     QString type;
-    //friend QDebug operator <<(QDebug stream, const Message& circle);
-
 };
-
-//inline QDebug operator <<(QDebug stream, const Message& message)
-//{
-//    stream << "sender: " << message.sender << "\n";
-//    return stream;
-//}
 
 class MessagesList : public QObject
 {

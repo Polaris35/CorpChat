@@ -429,13 +429,22 @@ bool DBFacade::createConversation(const QString &title, const QString &creator_e
     int id = query.value(0).toInt();
     query.finish();
 
-    query.prepare("INSERT INTO conversation (id_pictures, title, id_creator) VALUES(:path, :title, :id)");
-    query.bindValue(":path", path);
+    query.prepare("INSERT INTO attachments (url) VALUES (:url)");
+    query.bindValue(":url",path);
+
+    if(!query.exec()){
+        qDebug() << Q_FUNC_INFO << " Can't insert avatar path to attachments " << query.lastError().text();
+        return false;
+    }
+    int id_pictures = query.lastInsertId().toInt();
+
+    query.prepare("INSERT INTO conversations (id_pictures, title, id_creator) VALUES(:pictures, :title, :id)");
+    query.bindValue(":pictures", id_pictures);
     query.bindValue(":title",title);
     query.bindValue(":id",id);
 
     if(!query.exec()){
-        qDebug() << Q_FUNC_INFO << " Can't create conversation with id_creator: " << id << " and title " << title;
+        qDebug() << Q_FUNC_INFO << " Can't create conversation with id_pictures " << id_pictures << " and id_creator: " << id << ", and title " << title;
         return false;
     }
     qDebug() << Q_FUNC_INFO << "conversation creared!";
@@ -447,9 +456,8 @@ bool DBFacade::createConversation(const QString &title, const QString &creator_e
     foreach(QString user, users)
     {
          int user_id = userID(user);
-         if(user_id == -1)
-             continue;
-         addUserToConversation(conversation_id, user_id);
+         if(user_id != -1)
+              addUserToConversation(conversation_id, user_id);
     }
     return true;
 }
@@ -460,10 +468,10 @@ QString DBFacade::getConversationData(const int &conversation_id)
     QString data;
     QSqlQuery query(*m_db);
 
-    query.prepare("SELECT title, a.url, u.email "
-                  "INNER JOIN attachments a ON conversation.id_picture = a.id "
-                  "INNER JOIN useres u ON conversation.id_creator = useres.id "
-                  "WHERE conversation.id = :id");
+    query.prepare("SELECT title, a.url, u.email FROM conversations "
+                  "INNER JOIN attachments a ON conversations.id_pictures = a.id "
+                  "INNER JOIN useres u ON conversations.id_creator = u.id "
+                  "WHERE conversations.id = :id");
     query.bindValue(":id",conversation_id);
 
     if(!query.exec())
@@ -474,16 +482,16 @@ QString DBFacade::getConversationData(const int &conversation_id)
     query.next();
     data =      query.value(0).toString() +
                 net::Package::delimiter() +
-                query.value(1).toString() +
+                ImageSerializer::toBase64((query.value(1).toString())) +
                 net::Package::delimiter() +
                 query.value(2).toString();//title$$$AvatarPath$$$creatorEmail$$$size$$$userdata
 
     query.finish();
 
-    query.prepare("SELECT u.nickname, u.email, a.url"
-                  "INNER JOIN useres u ON partisipans.id_useres = useres.id "
-                  "INNER JOIN attachments a ON useres.id_pictures = a.id "
-                  "id_conversation = :id");
+    query.prepare("SELECT u.nickname, u.email, a.url FROM participants p "
+                  "INNER JOIN useres u ON p.id_useres = u.id "
+                  "INNER JOIN attachments a ON u.id_pictures = a.id "
+                  "WHERE id_conversation = :id");
     query.bindValue(":id",conversation_id);
 
     if(!query.exec())
@@ -521,7 +529,7 @@ bool DBFacade::addUserToConversation(const int &conversation_id, const int &user
 int DBFacade::userID(const QString &user)
 {
     QSqlQuery query(*m_db);
-    query.prepare(user);
+    query.prepare("SELECT id FROM useres WHERE email = :email");
     query.bindValue(":email",user);
     if(!query.exec())
     {
@@ -763,7 +771,8 @@ QList<int> DBFacade::conversationList(QString user)
     QSqlQuery query(*m_db);
     query.prepare("SELECT id_conversation FROM participants p "
                   "INNER JOIN useres u ON p.id_useres = u.id "
-                  "WHERE u.email = :user AND p.id_creator IS NOT NULL");
+                  "INNER JOIN conversations c ON p.id_conversation = c.id "
+                  "WHERE u.email = :user AND c.id_creator IS NOT NULL");
     query.bindValue(":user",user);
 
     bool ok = query.exec();

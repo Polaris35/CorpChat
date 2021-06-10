@@ -18,6 +18,7 @@ public:
     QString email() const;
     void setEmail(const QString &email);
 
+
 signals:
     void usernameChanged(QString newUsername);
     void emailChanged(QString newEmail);

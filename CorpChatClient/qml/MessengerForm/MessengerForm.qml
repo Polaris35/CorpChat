@@ -405,7 +405,7 @@ Rectangle {
                                 nameFilters: ["Image files (*.png *.bmp *.jpeg)"]
                                 onAccepted: {
                                     console.log("You chose: " + chooseAvatarDialog.fileUrl)
-                                    chooseAvatar.imageUrl = chooseAvatarDialog.fileUrl
+                                    //chooseAvatar.imageUrl = chooseAvatarDialog.fileUrl
                                     console.log(chooseAvatar.imageUrl)
                                     chooseAvatarDialog.close()
                                 }
@@ -447,6 +447,8 @@ Rectangle {
                                 implicitWidth: 150
                                 onClicked: {
                                     client.createConversation(titleField.text,chooseAvatarDialog.fileUrl)
+                                    animationOpacityBGConversationClose.start()
+                                    animationScaleConversationClose.start()
                                 }
                             }
                         }

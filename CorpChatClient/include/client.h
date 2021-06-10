@@ -55,11 +55,14 @@ public slots:
     void sendDocument(QString url);
 
     void getContactsList();
+    void getConversationList();
     void getMessageHistory();
+    void getMessageHistoryForGroupChat();
 
     void loadContactsList(const QStringList &json);
     void loadConversationList(const QStringList& json);
     void loadMessageHistory(const QStringList &json);
+	void loadGroupMessageHistory(const QStringList& json);
 
     void requestContact(QString email);
     void createConversation(QString title,QString path);
@@ -77,9 +80,9 @@ signals:
     void notifyMessage(QString sender);
 private:
     void addContact(const QString &contactData);
-    void newMessage(QString sender, QString time,QString text);
+	void newMessage(QString sender, QString destination, QString time,QString text);
     void newMessage(QString raw);
-    void newDocument(QString sender, QString filename, QString time, QByteArray base64);
+	void newDocument(QString sender, QString filename, QString time, QByteArray base64);
     void newDocument(QString raw);
     void newImage(QString raw);
     void newImage(QString sender, QString filename, QString time, QByteArray base64);

@@ -4,6 +4,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Controls.Material 2.12
 import GlobalQmlSettings 1.0
 import QtQuick.Layouts 1.12
+import Qt.labs.qmlmodels 1.0
 
 import corpchat.models.contactsModel 1.0
 
@@ -134,33 +135,69 @@ ListView {
         }
     }
 
-    delegate: ContactsDelegate {
-        id: contactsDelegate
-        width: list.width
-        //height: 40
-        avatarSource: model.avatar
-        username: model.nickname
-        z: 3
-        onClick: {
-            list.currentIndex = index
-            console.log("selected delegate #" + index)
-            selectedChanged(index)
-        }
-
-        Connections {
-            target: client
-            function onNotifyMessage(sender) {
-                console.log("Notifying on " + sender)
-                if (sender === model.nickname)
-                    notify()
-            }
-            Component.onCompleted: {
-                client.qmlNotifyUnreadMessage(model.nickname)
-            }
-        }
-    }
+    delegate: chooser
     Component.onCompleted: {
         selectedChanged.connect(contactsModel.indexChanged)
         //        list.currentIndex = 0
+    }
+    DelegateChooser {
+        id: chooser
+        role: "type"
+        DelegateChoice {
+            roleValue: "single"
+            ContactsDelegate {
+                id: contactsDelegate
+                width: list.width
+                //height: 40
+                avatarSource: model.avatar
+                username: model.nickname
+                z: 3
+                onClick: {
+                    list.currentIndex = index
+                    console.log("selected delegate #" + index)
+                    selectedChanged(index)
+                }
+
+                Connections {
+                    target: client
+                    function onNotifyMessage(sender) {
+                        console.log("Notifying on " + sender)
+                        if (sender === model.nickname)
+                            notify()
+                    }
+                    Component.onCompleted: {
+                        client.qmlNotifyUnreadMessage(model.nickname)
+                    }
+                }
+            }
+        }
+        DelegateChoice {
+            roleValue: "multiple"
+            GroupChatDelegate {
+                id: groupChatDelegate
+                width: list.width
+                //height: 40
+                avatarSource: model.avatar
+                title: model.nickname
+                z: 3
+                onClick: {
+                    list.currentIndex = index
+                    console.log("selected delegate #" + index)
+                    selectedChanged(index)
+                }
+
+                Connections {
+                    target: client
+                    function onNotifyMessage(sender) {
+                        console.log("Notifying on " + sender)
+                        if (sender === model.email)
+                            notify()
+                    }
+                    Component.onCompleted: {
+                        client.qmlNotifyUnreadMessage(model.email)
+                    }
+                }
+            }
+        }
     }
 }

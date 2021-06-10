@@ -60,6 +60,15 @@ QVariant ContactsModel::data(const QModelIndex &index, int role) const
 
     case ImageRole:
         return QVariant(item.imageUrl);
+
+    case TypeRole:
+        return QVariant(item.type);
+
+    case CreatorRole:
+        return QVariant(item.creator_email);
+
+    case UserListRole:
+        return QVariant(QVariant::fromValue<QList<ContactData>>(item.users));
     }
 
 
@@ -84,6 +93,15 @@ bool ContactsModel::setData(const QModelIndex &index, const QVariant &value, int
         break;
     case ImageRole:
         item.imageUrl = value.toString();
+        break;
+    case TypeRole:
+        item.type = value.toString();
+        break;
+    case CreatorRole:
+        item.creator_email = value.toString();
+        break;
+    case UserListRole:
+        item.users = value.value<QList<ContactData>>();
         break;
     }
 
@@ -129,6 +147,9 @@ QHash<int, QByteArray> ContactsModel::roleNames() const
     roles[EmailRole] = "email";
     roles[NicknameRole] = "nickname";
     roles[ImageRole] = "avatar";
+    roles[TypeRole] = "type";
+    roles[CreatorRole] = "creator_email";
+    roles[UserListRole] = "userlist";
     return roles;
 }
 
@@ -174,10 +195,13 @@ void ContactsModel::append(const Contact &item)
         qDebug() << "fuck! model is empty!";
     }
     bool ok = 0;
-
     ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.email), Roles::EmailRole);
     ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.nickname), Roles::NicknameRole);
     ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.imageUrl), Roles::ImageRole);
+    ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.type), Roles::TypeRole);
+    ok |= setData(this->index(this->rowCount({}) - 1), QVariant(item.creator_email), Roles::CreatorRole);
+    ok |= setData(this->index(this->rowCount({}) - 1), QVariant(QVariant::fromValue<QList<ContactData>>(item.users))
+                  , Roles::UserListRole);
 
     if(!ok)
         qDebug() << "Set data not working!";

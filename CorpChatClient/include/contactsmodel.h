@@ -15,13 +15,17 @@ public:
     {		
 		EmailRole = Qt::UserRole + 1,
 		NicknameRole,
-		ImageRole
+        ImageRole,
+        TypeRole,
+        CreatorRole,
+        UserListRole
     };
     ContactsModel(QObject *parent = nullptr);
     ContactsList *list() const;
     void setList(ContactsList *list);
     void append(const Contact &item);
     int currentIndex() const;
+	QString type() const;
     Q_INVOKABLE QString currentDialog() const;
     Q_INVOKABLE QString currentAvatar() const;
     // QAbstractItemModel interface
@@ -38,6 +42,7 @@ public slots:
     void indexChanged(int idx);
 signals:
     void selectedChanged(int idx);
+    void selectedChangedGroup(int idx);
 private:
     ContactsList *m_list;
     int m_currentIndex;

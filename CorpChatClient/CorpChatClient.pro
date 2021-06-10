@@ -48,7 +48,6 @@ HEADERS += \
     include/contactchoosemodel.h \
     include/contactslist.h \
     include/contactsmodel.h \
-    include/globals.h \
     include/messageslist.h \
     include/messagesmodel.h \
     include/userdata.h
