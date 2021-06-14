@@ -16,8 +16,6 @@ import MessengerForm.MessageInputField 1.0
 import MessengerForm.MessagesView 1.0
 import MessengerForm.ContactsView 1.0
 
-
-
 Rectangle {
     id: root
     function validateEmail(email) {
@@ -436,6 +434,7 @@ Rectangle {
                                 text: qsTr("cancel")
                                 implicitWidth: 150
                                 onClicked: {
+                                    newConversationStackView.pop()
                                     animationOpacityBGConversationClose.start()
                                     animationScaleConversationClose.start()
                                 }
@@ -449,7 +448,9 @@ Rectangle {
                                 text: qsTr("submit")
                                 implicitWidth: 150
                                 onClicked: {
-                                    client.createConversation(titleField.text,chooseAvatarDialog.fileUrl)
+                                    client.createConversation(
+                                                titleField.text,
+                                                chooseAvatarDialog.fileUrl)
                                     animationOpacityBGConversationClose.start()
                                     animationScaleConversationClose.start()
                                 }
@@ -492,8 +493,7 @@ Rectangle {
                                     contactChooseModel.setFilterFixedString(
                                                 searchField.text)
                                 } else
-                                    searchField.placeholderTextColor = Material.color(
-                                                Material.Red)
+                                    contactChooseModel.invalidate()
                             }
                         }
 
@@ -592,6 +592,7 @@ Rectangle {
                                 text: qsTr("cancel")
                                 implicitWidth: 150
                                 onClicked: {
+
                                     animationOpacityBGConversationClose.start()
                                     animationScaleConversationClose.start()
                                 }

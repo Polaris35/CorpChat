@@ -28,6 +28,7 @@ private:
     QString m_username;
     QString m_email;
     QString m_imageUrl;
+    QString role;
 
 };
 

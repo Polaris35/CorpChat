@@ -12,99 +12,11 @@ import corpchat.models.messagesModel 1.0
 
 import corpchat.models.contactschooseModel 1.0
 
-Rectangle{
-    width: GlobalSettings.defaultFormWidth
-    height: GlobalSettings.defaultFormHeight
+Rectangle {
+    color: Material.background
     Rectangle {
-        anchors.left: parent.left
-        color: Material.background
-        width: 500
-        height: 320
-        Label {
-            id: labelTitle
-            text: qsTr("Input Title")
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 10
-            font.pixelSize: 28
-            color: "red"
-            font.family: starsetFont.name
-        }
-
-        TextField {
-            id: titleField
-            width: 300
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: labelTitle.bottom
-            anchors.topMargin: 10
-            placeholderText: "title"
-        }
-
-        Button {
-            id: chooseAvatarBtn
-            anchors.top: titleField.bottom
-            anchors.topMargin: 10
-            anchors.horizontalCenter: parent.horizontalCenter
-            text: qsTr("choose Dialog avatar")
-            FileDialog {
-                id: chooseAvatarDialog
-                title: qsTr("Выберите файл")
-                folder: shortcuts.home
-                selectMultiple: false
-                selectFolder: false
-                nameFilters: ["Image files (*.png *.bmp *.jpeg)"]
-                onAccepted: {
-                    console.log("You chose: " + chooseAvatarDialog.fileUrl)
-                    //chooseAvatar.imageUrl = chooseAvatarDialog.fileUrl
-                    console.log(chooseAvatar.imageUrl)
-                    chooseAvatarDialog.close()
-                }
-                onRejected: {
-                    chooseAvatarDialog.close()
-                }
-            }
-            onClicked: {
-                chooseAvatarDialog.open()
-            }
-        }
-
-        Rectangle {
-            color: "transparent"
-            width: parent.width
-            implicitHeight: 50
-            anchors.top: chooseAvatarBtn.bottom
-            anchors.topMargin: 10
-            Button {
-                anchors {
-                    left: parent.left
-                    leftMargin: 75
-                }
-
-                text: qsTr("cancel")
-                implicitWidth: 150
-                onClicked: {
-                    animationOpacityBGConversationClose.start()
-                    animationScaleConversationClose.start()
-                }
-            }
-            Button {
-                anchors {
-                    right: parent.right
-                    rightMargin: 75
-                }
-
-                text: qsTr("submit")
-                implicitWidth: 150
-                onClicked: {
-                    client.createConversation(titleField.text,chooseAvatarDialog.fileUrl)
-                    animationOpacityBGConversationClose.start()
-                    animationScaleConversationClose.start()
-                }
-            }
-        }
-    }
-    Component {
-        id: newConversationInitialItemComponent
+        width: parent.width / 2
+        height: parent.height
         Rectangle {
             id: newConversationInitialItem
             z: 4
@@ -251,13 +163,10 @@ Rectangle{
                     implicitWidth: 150
                     onClicked: {
 
-                        newConversationStackView.push(
-                                    inputTitleandAvatar)
+                        newConversationStackView.push(inputTitleandAvatar)
                     }
                 }
             }
         }
     }
 }
-
-
