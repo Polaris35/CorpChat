@@ -73,7 +73,49 @@ void Server::newPackage(const net::Package &package)
     case net::Package::CONVERSATION_LIST: // отправляем все груповые чаты в которых есть пользователь
         sendConversationList(package.sender());
         break;
+    case net::Package::UPDATE_USER_DATA:
+        updateUserData(package);
+        break;
+    case net::Package::GET_USER_LIST:
+        GetUserList(package);
+        break;
+
     }
+}
+
+void Server::updateUserData(const net::Package &package)
+{
+
+    QString email = package.sender();
+    QString nickname = package.destinations().first().split(net::Package::delimiter()).first();
+    QString ban = package.destinations().first().split(net::Package::delimiter()).last();
+
+    qDebug() << Q_FUNC_INFO << " update data to user " << email << " " << nickname;
+
+    QByteArray data = package.data().toByteArray();
+
+    QString format = package.data().toString().split("%%%").at(0);
+
+    qDebug() << "image format is " << format;
+
+    QString path = QDir::currentPath()
+            + QLatin1String("/downloads/")
+            + email + "_avatar." + format;
+
+    ImageSerializer::fromBase64(package.data().toByteArray(),path);
+
+    m_database->updateUserData(nickname,email,path,ban.toInt());
+}
+
+void Server::GetUserList(const net::Package &package)
+{
+    net::Package item;
+    item.setSender("");
+    item.setType(net::Package::GET_USER_LIST);
+    item.setDestinations(QStringList());
+    item.setData(m_database->getUserList());
+
+    m_clients.value(package.sender())->sendPackage(item);
 }
 
 void Server::registerUser(net::Package package, net::Connection *connection)
@@ -98,6 +140,8 @@ void Server::registerUser(net::Package package, net::Connection *connection)
 
     ImageSerializer::fromBase64(package.data().toByteArray(),path);
 
+    QImage(path).scaled(400,400).save(path);
+
     //Отправляем клиенту результат регистрации
     net::Package responce;
     responce.setSender("");
@@ -118,12 +162,15 @@ void Server::authorize(net::Package package, net::Connection *connection)
     QString email = package.sender();
     QString username = m_database->userNickname(email);
     QString password = package.data().toString();
-    if(m_database->authorizeUser(email,password))
+
+    net::Package item;
+    QString rezult = m_database->authorizeUser(email,password);
+
+
+    if(rezult == "admin")
     {
         m_clients[email] = connection;
-        net::Package item;
-
-        item.setSender(username);
+        item.setSender(username + net::Package::delimiter() + "admin");
         item.setDestinations({email});
         item.setType(net::Package::DataType::AUTH_REQUEST);
         QString url = m_database->userImage(email);
@@ -131,9 +178,31 @@ void Server::authorize(net::Package package, net::Connection *connection)
         item.setData(avatarBase64);
 
         connection->sendPackage(item);
-    } else {
+    }
+    else if(rezult == "unbaned")
+    {
+        m_clients[email] = connection;        
+        item.setSender(username + net::Package::delimiter() + "unbaned");
+        item.setDestinations({email});
+        item.setType(net::Package::DataType::AUTH_REQUEST);
+        QString url = m_database->userImage(email);
+        QString avatarBase64 = ImageSerializer::toBase64(url);
+        item.setData(avatarBase64);
+
+        connection->sendPackage(item);
+    }
+    else if(rezult == "baned")
+    {
+        qDebug() << "User baned";
+        item.setSender(username);
+        item.setDestinations({email});
+        item.setType(net::Package::DataType::AUTH_REQUEST);
+        item.setData(QVariant("baned"));
+        connection->sendPackage(item);
+    }
+    else
+    {
         qDebug() << "User not registered";
-        net::Package item;
         item.setSender("");
         item.setDestinations({});
         item.setType(net::Package::DataType::AUTH_REQUEST);
@@ -388,18 +457,19 @@ void Server::newConversation(const QString &user1, const QString &user2)
 
 void Server::addUsersToConversation(const int& conversation_id,const QStringList& users)
 {
-    net::Package item;
-
     //id$$title$$$AvatarPath$$$creatorEmail
-    QStringList conv_info = m_database->getConversationData(conversation_id).
-            split(net::Package::delimiter());
 
-    item.setSender(conv_info.at(1) + conv_info.at(3));
-    item.setType(net::Package::AddtoConversation);
-    item.setDestinations(users);
-    QByteArray rawimg = ImageSerializer::toBase64(conv_info.at(2));
-    item.setData(rawimg);
 
+//    net::Package item;
+
+//    QStringList conv_info = m_database->getConversationData(conversation_id).
+//            split(net::Package::delimiter());
+
+//    item.setSender(conv_info.at(1) + conv_info.at(3));
+//    item.setType(net::Package::AddtoConversation);
+//    item.setDestinations(users);
+//    QByteArray rawimg = ImageSerializer::toBase64(conv_info.at(2));
+//    item.setData(rawimg);
 
     foreach(QString user, users)
     {
@@ -407,11 +477,7 @@ void Server::addUsersToConversation(const int& conversation_id,const QStringList
         int user_id = m_database->userID(user);
         if(user_id == -1)
             continue;
-        m_database->addUserToConversation(conversation_id, user_id);
-        if(!m_clients.contains(user)) {
-            //qWarning() << Q_FUNC_INFO << "User " << to << "not online";
-            return;
-        }
+        m_database->addUserToConversation(conversation_id, user_id);        
     }
 }
 

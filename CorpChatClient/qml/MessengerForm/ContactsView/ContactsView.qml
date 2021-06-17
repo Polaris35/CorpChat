@@ -15,6 +15,7 @@ ListView {
 
     signal newConversation
     signal newDialog
+    signal clickConversation(string type)
     focus: true
     clip: true
     model: contactsModel
@@ -158,6 +159,7 @@ ListView {
                     list.currentIndex = index
                     console.log("selected delegate #" + index)
                     selectedChanged(index)
+                    clickConversation(model.type)
                 }
 
                 Connections {
@@ -186,6 +188,7 @@ ListView {
                     list.currentIndex = index
                     console.log("selected delegate #" + index)
                     selectedChangedGroup(index)
+                    clickConversation(model.type)
                 }
 
                 Connections {

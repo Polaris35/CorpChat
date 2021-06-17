@@ -97,6 +97,10 @@ Rectangle {
                         documentDialog.visible = true
                     }
                 }
+                Shortcut {
+                    sequence: "Enter"
+                    onActivated: addDocumentBtnImage.clicked
+                }
             }
             FileDialog {
                 id: documentDialog

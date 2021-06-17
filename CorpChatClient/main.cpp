@@ -23,6 +23,7 @@
 #include "include/userdata.h"
 #include "include/choosecontactlist.h"
 #include "include/contactchoosemodel.h"
+#include "include/usersmodel.h"
 
 int main(int argc, char *argv[])
 {
@@ -51,6 +52,11 @@ int main(int argc, char *argv[])
     contactChooseModel.setList(&chooseContactList);
     client.setContactsChooseModel(&contactChooseModel);
 
+    UsersList usersList;
+    UsersModel usersModel;
+    usersModel.setList(&usersList);
+    client.setUsersModel(&usersModel);
+
     QSortFilterProxyModel contactChooseproxyModel;
     contactChooseproxyModel.setSourceModel(&contactChooseModel);
     contactChooseproxyModel.setSortRole(ContactsChooseModel::NicknameRole);
@@ -77,11 +83,13 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("applicationDirPath", QGuiApplication::applicationDirPath());
     qmlRegisterType<ContactsModel>("corpchat.models.contactsModel",1,0,"ContactsModel");
     qmlRegisterType<MessagesModel>("corpchat.models.messagesModel",1,0,"MessagesModel");
+    qmlRegisterType<UsersModel>("corpchat.models.usersModel",1,0,"AdminModel");
     qmlRegisterType<ContactsChooseModel>("corpchat.models.contactschooseModel",1,0,"ContactsChooseModel");
     qmlRegisterType<Client>("corpchat.net.client",1,0,"Client");
 
     engine.rootContext()->setContextProperty("contactsModel", &contactsModel);
     engine.rootContext()->setContextProperty("messagesModel", &messagesModel);
+    engine.rootContext()->setContextProperty("adminModel",QVariant::fromValue(&usersModel));
     engine.rootContext()->setContextProperty("contactChooseModel", &contactChooseproxyModel);
     engine.rootContext()->setContextProperty("client", &client);
 

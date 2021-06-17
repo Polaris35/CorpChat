@@ -33,6 +33,9 @@ private slots:
 
     void newPackage(const net::Package &package);
 
+    void updateUserData(const net::Package& package);
+    void GetUserList(const net::Package& package);
+
     void registerUser(net::Package package, net::Connection *connection);
     void authorize(net::Package package, net::Connection *connection);
     void sendMessageHistory(const QString& to, const int& conversation_id);

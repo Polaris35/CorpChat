@@ -16,7 +16,9 @@ SOURCES += \
         src/messageslist.cpp \
         src/messagesmodel.cpp \
 		src/userdata.cpp \
-		src/choosecontactlist.cpp
+		src/choosecontactlist.cpp \
+	src/userslist.cpp \
+	src/usersmodel.cpp
 
 RESOURCES += qml.qrc
 
@@ -50,4 +52,6 @@ HEADERS += \
     include/contactsmodel.h \
     include/messageslist.h \
     include/messagesmodel.h \
-    include/userdata.h
+    include/userdata.h \
+    include/userslist.h \
+    include/usersmodel.h

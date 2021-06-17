@@ -19,6 +19,9 @@ public:
     void setEmail(const QString &email);
 
 
+    QString getRole() const;
+    void setRole(const QString &value);
+
 signals:
     void usernameChanged(QString newUsername);
     void emailChanged(QString newEmail);

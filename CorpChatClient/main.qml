@@ -33,6 +33,9 @@ ApplicationWindow {
             id: adminPanel
             AdminPanel {
                 anchors.fill: parent
+                onBack: {
+                    stackView.pop()
+                }
             }
         }
 
@@ -41,6 +44,9 @@ ApplicationWindow {
             MessengerForm {
                 id: mainForm
                 anchors.fill: parent
+                onMenuClick: {
+                    stackView.push(adminPanel)
+                }
             }
         }
         Component {
@@ -62,6 +68,11 @@ ApplicationWindow {
 
                 Connections {
                     target: client
+                    function onUserBaned()
+                    {
+
+                    }
+
                     function onAuthSuccsess() {
                         if (stackView.depth > 1)
                             stackView.pop()

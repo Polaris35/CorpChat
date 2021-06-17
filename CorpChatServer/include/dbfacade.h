@@ -21,8 +21,11 @@ public:
     QSqlDatabase *db() const;
     void setDb(QSqlDatabase *db);
 
+    void updateUserData(QString username, QString email, QString image, bool ban);
+    QStringList getUserList();
+
 	bool registerUser(QString username, QString email, QString password, QString imageUrl);
-    bool authorizeUser(QString username, QString password);
+    QString authorizeUser(QString username, QString password);
     void addMessage(QString sender, QString receiver, QString messageText);
     QStringList messageHistory(QString user1, QString user2);
     QStringList messageHistory(const int& conversation_id);

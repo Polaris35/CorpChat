@@ -26,6 +26,7 @@ public:
     void append(const Contact &item);
     int currentIndex() const;
 	QString type() const;
+    Q_INVOKABLE QString currentNickname() const;
     Q_INVOKABLE QString currentDialog() const;
     Q_INVOKABLE QString currentAvatar() const;
     Q_INVOKABLE QString currentType() const;

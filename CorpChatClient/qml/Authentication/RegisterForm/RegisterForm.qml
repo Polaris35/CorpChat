@@ -17,7 +17,6 @@ Rectangle {
         source: "../../fonts/FARRAY.otf"
     }
     signal back
-
     Rectangle {
         id: background
         z: 0
@@ -51,9 +50,9 @@ Rectangle {
             id: inputEmail
             property var accent: Material.color(Material.Teal)
             Layout.minimumHeight: 40
-            Layout.minimumWidth: 150
+            Layout.minimumWidth: 250
             Layout.alignment: Qt.AlignHCenter
-            width: 150
+            width: 250
             Material.accent: accent
             placeholderText: qsTr("Email")
             ErrorString {
@@ -78,9 +77,9 @@ Rectangle {
             id: inputNickname
             property var accent: Material.color(Material.Teal)
             Layout.minimumHeight: 40
-            Layout.minimumWidth: 150
+            Layout.minimumWidth: 250
             Layout.alignment: Qt.AlignHCenter
-            width: 150
+            width: 250
             Material.accent: accent
             placeholderText: qsTr("Никнейм")
             ErrorString {
@@ -99,7 +98,7 @@ Rectangle {
             id: inputPassword
             property var accent: Material.color(Material.Teal)
             Layout.minimumHeight: 40
-            Layout.minimumWidth: 150
+            Layout.minimumWidth: 250
             Layout.alignment: Qt.AlignHCenter
             width: 150
             Material.accent: accent
@@ -133,9 +132,9 @@ Rectangle {
             id: confirmPassword
             property var accent: Material.color(Material.Teal)
             Layout.minimumHeight: 40
-            Layout.minimumWidth: 150
+            Layout.minimumWidth: 250
             Layout.alignment: Qt.AlignHCenter
-            width: 150
+            width: 250
             Material.accent: accent
             placeholderText: qsTr("Подтвердите пароль")
             echoMode: TextInput.Password
@@ -167,7 +166,7 @@ Rectangle {
         }
         Button {
             id: chooseAvatar
-            property var imageUrl
+            property var imageUrl: ""
             Layout.alignment: Qt.AlignHCenter
             text: qsTr("Выберите изображение профиля")
             flat: true
@@ -253,18 +252,20 @@ Rectangle {
                         & checkField(confirmPassword,
                                      pwcErrorString) & checkField(
                             inputNickname, nicknameErrorString)
-                        & checkField(chooseAvatar.imageUrl,
-                                     chooseAvatarErrorString) & checkField(
-                            inputEmail, inputEmailErrorString)
-                        && validateEmail(inputEmail.text)
+                        & checkField(inputEmail,
+                                     inputEmailErrorString) && validateEmail(
+                            inputEmail.text)
                 return check_rezult
             }
 
             onClicked: {
                 if (checkFields() && pwcErrorString.checkConditions())
-                    client.registerNewUser(inputNickname.text, inputEmail.text,
-                                           inputPassword.text,
-                                           chooseAvatar.imageUrl)
+                    if (chooseAvatar.imageUrl == "")
+                        chooseAvatar.imageUrl = "file:///" + "images/Default.jpg"
+                console.log(chooseAvatar.imageUrl)
+                client.registerNewUser(inputNickname.text, inputEmail.text,
+                                       inputPassword.text,
+                                       chooseAvatar.imageUrl)
             }
         }
         Button {

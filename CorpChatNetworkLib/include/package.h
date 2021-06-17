@@ -26,7 +26,9 @@ public:
         CreateConversation,
         AddtoConversation,
         GROUP_MESSAGE_HISTORY,
-        CONVERSATION_LIST
+        CONVERSATION_LIST,
+        GET_USER_LIST, // ПОЛУЧАЕМ СПИСОК ВСЕХ КОНТАКТОВ
+        UPDATE_USER_DATA // ЗАПРОС НА ОБНОВЛЕНИЕ ДАНЫХ ОПРЕДЕЛЕНОГО КОНТАКТА
     };
     Q_ENUM(DataType)
 public:

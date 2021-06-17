@@ -46,10 +46,10 @@ bool DBFacade::registerUser(QString username, QString email, QString password, Q
     return true;
 }
 
-bool DBFacade::authorizeUser(QString email, QString password)
+QString DBFacade::authorizeUser(QString email, QString password)
 {
     QSqlQuery query(*m_db);
-    query.prepare("SELECT COUNT(*) "
+    query.prepare("SELECT COUNT(*), ban, role "
                   "FROM useres "
                   "WHERE email = :email AND password = :password");
     query.bindValue(":email",email);
@@ -57,12 +57,20 @@ bool DBFacade::authorizeUser(QString email, QString password)
     if(query.exec() && query.next())
     {
         bool isRegistered = query.value(0).toInt() != 0;
-        return isRegistered;
+        if(isRegistered)
+            if(query.value(2).toString() == "admin")
+                return QString("admin");
+            else if( query.value(1).toInt() == 0)
+                return QString("unbaned");
+            else
+                return QString("baned");
+        else
+            return QString("unregistered");
     }
     else
     {
         qWarning() << Q_FUNC_INFO << "Cannot execute query" << query.lastError().number();
-        return false;
+        return QString("error");
     }
 }
 
@@ -909,4 +917,45 @@ QSqlDatabase *DBFacade::db() const
 void DBFacade::setDb(QSqlDatabase *db)
 {
     m_db = db;
+}
+
+void DBFacade::updateUserData(QString username, QString email, QString image, bool ban)
+{
+    QSqlQuery query(*m_db);
+    query.prepare("UPDATE useres "
+                  "INNER JOIN attachments a ON useres.id_pictures = a.id "
+                  "SET nickname = :username, a.url = :url, ban = :ban "
+                  "WHERE email = :email");
+    query.bindValue(":username",username);
+    query.bindValue(":url",image);
+    query.bindValue(":ban",ban);
+    query.bindValue(":email",email);
+
+    bool ok = query.exec();
+    if(!ok) {
+        qDebug() << Q_FUNC_INFO << query.lastError().text();
+    }
+}
+
+QStringList DBFacade::getUserList()
+{
+    QSqlQuery query(*m_db);
+    query.prepare("SELECT nickname, email, ban, a.url FROM useres "
+                  "INNER JOIN attachments a ON useres.id_pictures = a.id");
+
+    bool ok = query.exec();
+    if(!ok) {
+        qDebug() << Q_FUNC_INFO << query.lastError().text();
+    }
+
+    QStringList rezult;
+
+    while(query.next())
+    {//nickname,email,ban,url
+        rezult.append(query.value(0).toString() + net::Package::delimiter() +
+                      query.value(1).toString() + net::Package::delimiter() +
+                      query.value(2).toString() + net::Package::delimiter() +
+                      ImageSerializer::toBase64(query.value(3).toString()));
+    }
+    return rezult;
 }

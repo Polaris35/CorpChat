@@ -37,3 +37,13 @@ void UserData::setEmail(const QString &email)
     m_email = email;
 }
 
+QString UserData::getRole() const
+{
+    return role;
+}
+
+void UserData::setRole(const QString &value)
+{
+    role = value;
+}
+

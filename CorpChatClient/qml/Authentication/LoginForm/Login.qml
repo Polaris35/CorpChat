@@ -4,6 +4,7 @@ import QtQuick.Controls.Material 2.12
 import GlobalQmlSettings 1.0
 import QtQuick.Layouts 1.12
 import QtQuick.Controls.Styles 1.4
+import QtQuick.Dialogs 1.2
 import ErrorString 1.0
 
 Rectangle {
@@ -18,6 +19,7 @@ Rectangle {
     }
     signal auth(string login, string password)
     signal gotoRegister
+    signal baned
 
     Rectangle {
         id: background
@@ -51,12 +53,13 @@ Rectangle {
             id: login_input
             property var accent: Material.color(Material.Teal)
             Layout.minimumHeight: 40
-            Layout.minimumWidth: 150
+            Layout.minimumWidth: 250
             Layout.fillHeight: false
             Layout.fillWidth: false
             Layout.alignment: Qt.AlignHCenter
             Material.accent: accent
             width: 150
+            placeholderText: "login"
             text: "ikozluk160@gmail.com"
             onTextChanged: {
                 loginErrorString.visible = false
@@ -81,11 +84,12 @@ Rectangle {
             id: password_input
             property var accent: Material.color(Material.Teal)
             Layout.minimumHeight: 40
-            Layout.minimumWidth: 150
+            Layout.minimumWidth: 250
             Layout.alignment: Qt.AlignHCenter
             text: "1"
             width: 150
             Material.accent: accent
+            placeholderText: "password"
 
             echoMode: show_password_checkbox.checked ? TextInput.Normal : TextInput.Password
 
@@ -199,6 +203,41 @@ Rectangle {
         target: client
         function onAuthFailure() {
             authErrorString.visible = true
+        }
+    }
+    Dialog {
+        id: ban_error
+        visible: false
+        Material.theme: Material.Dark
+
+        Rectangle {
+            color: Material.backgroundColor
+            implicitWidth: 400
+            implicitHeight: 100
+            Label {
+                anchors.centerIn: parent
+                text: "Данный пользователь заблокирован."
+            }
+        }
+
+        title: "Dialog"
+
+        standardButtons: StandardButton.Ok
+
+        onButtonClicked: {
+            if (clickedButton == StandardButton.Ok) {
+                console.log("Accepted " + clickedButton)
+                ban_error.visible = false
+            }
+        }
+
+        Connections {
+            Component.onCompleted: console.log("dialog Created!")
+            target: client
+            onUserBaned: {
+                console.log("Dialog is opened")
+                ban_error.visible = true
+            }
         }
     }
 }

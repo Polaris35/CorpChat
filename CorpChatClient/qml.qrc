@@ -34,8 +34,6 @@
         <file>qml/icons/send-white-48dp.svg</file>
         <file>qml/icons/insert_emoticon-white-48dp.svg</file>
         <file>qml/icons/add_circle_outline-white-48dp.svg</file>
-        <file>qml/Images/trials.gif</file>
-        <file>qml/Images/Default.png</file>
         <file>qml/fonts/OpenSansEmoji.ttf</file>
         <file>qml/fonts/NotoColorEmoji.ttf</file>
         <file>qml/MessengerForm/IconClickHighlight/IconClickHighlight.qml</file>
@@ -58,5 +56,6 @@
         <file>qml/MessengerForm/ContactsView/GroupChatDelegate.qml</file>
         <file>qml/AdminPanel/AdminPanel.qml</file>
         <file>qml/AdminPanel/qmldir</file>
+        <file>qml/Images/Default.jpg</file>
     </qresource>
 </RCC>

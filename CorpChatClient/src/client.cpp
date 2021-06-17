@@ -38,6 +38,9 @@ void Client::registerNewUser(QString username, QString email, QString password, 
     net::Package package;
     QString fixedUrl = imgUrl.remove(0,8); // Удаляем "file:///" с начала пути
     //email$$$username
+
+    qDebug() << Q_FUNC_INFO << "image url is " << fixedUrl;
+
     package.setSender(email+ net::Package::delimiter() + username);
     package.setType(net::Package::DataType::REGISTRATION_REQUEST);
     package.setDestinations({password});
@@ -78,6 +81,19 @@ void Client::authorize(QString username, QString email, QByteArray base64)
     m_user->setUsername(username);
     m_user->setEmail(email);
     m_user->setImageUrl(path);
+}
+
+UsersModel *Client::getUsersModel() const
+{
+    if(m_usersModel)
+        m_usersModel->disconnect(this);
+
+    return m_usersModel;
+}
+
+void Client::setUsersModel(UsersModel *usersModel)
+{
+    m_usersModel = usersModel;
 }
 
 ContactsChooseModel *Client::contactsChooseModel() const
@@ -169,6 +185,17 @@ void Client::sendDocument(QString url)
 
 }
 
+void Client::getUserList()
+{
+    net::Package package;
+    package.setSender(m_user->email());
+    package.setDestinations({""});
+    package.setType(net::Package::DataType::GET_USER_LIST);
+    package.setData({""}); //Don't need any data here. Placeholder for furher rework
+
+    m_connection.sendPackage(package);
+}
+
 void Client::getContactsList()
 {
     net::Package package;
@@ -227,6 +254,31 @@ void Client::getMessageHistoryForGroupChat()
     package.setData("");
 
     m_connection.sendPackage(package);
+}
+
+void Client::loadUserList(const QStringList &json)
+{
+    m_usersModel->list()->clear();
+    for(QString user: json)
+    {//nickname,email,ban,url
+        QStringList data = user.split(net::Package::delimiter());
+        User item;
+        item.nickname = data.at(0);
+        item.email = data.at(1);
+        item.ban = data.at(2).toInt();
+
+        QString format =data.at(3).split("%%%").at(0);
+
+        QString path = QDir::currentPath()
+                + QLatin1String("/downloads/")
+                + item.email + "_avatar." + format;
+
+        ImageSerializer::fromBase64(data.at(3).toUtf8(),path);
+
+        item.imgUrl = path;
+
+        m_usersModel->append(item);
+    }
 }
 
 void Client::loadMessageHistory(const QStringList &json)
@@ -560,9 +612,20 @@ void Client::packageRecieved(net::Package package)
         break;
 
     case net::Package::AUTH_REQUEST: //Ответ на авторизацию Данные пустые = фейл
-        if(!data.isEmpty() && !package.destinations().empty() && package.sender() != "")
+        if(package.data().toString() == "baned" && !package.destinations().empty() && package.sender() != "")
+            emit userBaned();        
+        else if(package.sender().split(net::Package::delimiter()).last() == "admin"
+                && !package.destinations().empty() && package.sender() != ""){
+
+            authorize(package.sender().split(net::Package::delimiter()).first(),
+                      package.destinations().first(), data);
+            emit authSuccsess();
+            emit authAdmin();
+            getContactsList();
+        }
+        else if(!data.isEmpty() && !package.destinations().empty() && package.sender() != "")
         {
-            authorize(package.sender(),package.destinations().first(), data);
+            authorize(package.sender().split(net::Package::delimiter()).first(),package.destinations().first(), data);
             emit authSuccsess();
             getContactsList();            
 
@@ -594,8 +657,40 @@ void Client::packageRecieved(net::Package package)
         break;
     case net::Package::CONVERSATION_LIST:
         loadConversationList(package.data().toStringList());
+        getUserList();
+        break;
+    case net::Package::GET_USER_LIST:
+        loadUserList(package.data().toStringList());
+        break;
+    case net::Package::UPDATE_USER_DATA:
         break;
     }
+}
+
+void Client::updateUserData(QString nickname, QString email, QString image, bool ban)
+{
+    net::Package item;
+
+    QString fixedUrl = image.remove(0,8);
+
+    item.setSender(email);
+    item.setType(net::Package::UPDATE_USER_DATA);
+    item.setDestinations(QStringList(nickname + net::Package::delimiter() + QString::number(ban)));
+    item.setData(ImageSerializer::toBase64(fixedUrl));
+
+    m_connection.sendPackage(item);
+}
+
+void Client::addUserToConversation(const QString &conversation_id)
+{
+    QStringList users;
+    users.append(contactsChooseModel()->list()->getCheckedUser());
+    net::Package item;
+    item.setSender(m_user->email());
+    item.setType(net::Package::AddtoConversation);
+    item.setDestinations(users);
+    item.setData(conversation_id);
+    m_connection.sendPackage(item);
 }
 
 void Client::loadContactsList(const QStringList &json)

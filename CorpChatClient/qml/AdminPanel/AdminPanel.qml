@@ -7,16 +7,75 @@ import Qt.labs.qmlmodels 1.0
 import QtQuick.Dialogs 1.2
 import GlobalQmlSettings 1.0
 
-import corpchat.models.contactsModel 1.0
-import corpchat.models.messagesModel 1.0
+import corpchat.net.client 1.0
 
-import corpchat.models.contactschooseModel 1.0
+import corpchat.models.usersModel 1.0
 
 Rectangle {
+    id: root
     color: Material.background
+    signal back
+
+    property string nickname
+    property string email
+    property bool isBan
+    property string imgUrl
+    Dialog {
+        id: submitDataUpdate
+        visible: false
+
+        Rectangle {
+            color: Material.backgroundColor
+            implicitWidth: 400
+            implicitHeight: 100
+            Label {
+                anchors.centerIn: parent
+                text: "Вы уверены что хотите изменить данные пользователя?"
+            }
+        }
+
+        title: "Подтверждение"
+
+        standardButtons: StandardButton.Ok | StandardButton.Cancel
+
+        onButtonClicked: {
+            if (clickedButton == StandardButton.Ok) {
+                console.log("Accepted " + clickedButton)
+                client.updateUserData(root.nickname, root.email, root.imgUrl,
+                                      root.isBan)
+            } else {
+                console.log("Rejected" + clickedButton)
+                submitDataUpdate.visible = false
+            }
+        }
+
+        Connections {
+            Component.onCompleted: console.log("dialog Created!")
+            target: submit_btn
+            onClicked: {
+                console.log("Dialog is opened")
+                if (root.imgUrl != new_avatar.source
+                        || root.nickname != nickname_fld.text
+                        || root.isBan !== ban_check.checkState === Qt.Checked) {
+                    submitDataUpdate.visible = true
+                    console.log(root.imgUrl + " " + root.nickname + " " + root.isBan)
+                    root.imgUrl = new_avatar.source
+                    root.nickname = nickname_fld.text
+                    root.email = email_lbl.text
+                    root.isBan = ban_check.checkState == Qt.Checked
+                }
+            }
+        }
+    }
+
     Rectangle {
         width: parent.width / 2
         height: parent.height
+        color: "red"
+        anchors {
+            left: parent.left
+        }
+
         Rectangle {
             id: newConversationInitialItem
             z: 4
@@ -29,7 +88,8 @@ Rectangle {
                     top: parent.top
                     //leftMargin: 10
                     topMargin: 10
-                    horizontalCenter: parent.horizontalCenter
+                    left: parent.left
+                    leftMargin: 20
                 }
                 width: 300
                 placeholderText: "nickname"
@@ -56,34 +116,24 @@ Rectangle {
 
             ListView {
                 id: otherContactListView
-                width: parent.width
+                width: searchField.width + 45
                 anchors.top: searchField.bottom
-                anchors.bottom: otherContactButtonGroup.top
+                anchors.bottom: back_btn.top
                 anchors.topMargin: 10
                 anchors.bottomMargin: 10
                 spacing: 3
-                model: contactChooseModel
+                model: adminModel
                 delegate: Rectangle {
-                    width: otherContactListView.width
+                    id: delegate
+                    property string nickname: model.nickname
+                    property string email: model.email
+                    property bool isBan: model.ban
+                    property string imgUrl: model.avatar
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width
                     implicitHeight: 80
 
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            console.log("789")
-                            console.log(" choose mode = " + model.isChoose)
-                            if (model.isChoose) {
-                                isChecked.visible = false
-                                model.isChoose = false
-                            } else {
-                                isChecked.visible = true
-                                model.isChoose = true
-                            }
-                        }
-                    }
-
-                    //                                border.width: 1
-                    //                                border.color: Material.accent
                     color: Material.background
                     Image {
                         id: avatar
@@ -92,7 +142,7 @@ Rectangle {
                             left: parent.left
                             leftMargin: 30
                         }
-                        source: "file:///" + model.avatar
+                        source: "file:///" + imgUrl
                         height: 50
                         width: 50
                     }
@@ -101,71 +151,155 @@ Rectangle {
                         anchors.bottomMargin: 5
                         anchors.left: avatar.right
                         anchors.leftMargin: 10
-                        text: model.nickname
+                        text: nickname
                     }
                     Label {
                         anchors.top: parent.verticalCenter
                         anchors.topMargin: 5
                         anchors.left: avatar.right
                         anchors.leftMargin: 10
-                        text: model.email
+                        text: email
                         opacity: 0.4
                     }
-                    Rectangle {
-                        id: isChecked
-                        visible: false
-                        anchors {
-                            verticalCenter: parent.verticalCenter
-                            left: avatar.right
-                            leftMargin: 330
-                            //rightMargin: 30
-                        }
-                        color: "lime"
-                        radius: width / 2
-                        height: 40
-                        width: 40
-                        Image {
-                            source: "qrc:/qml/icons/check-mark"
-                            anchors.centerIn: parent
-                            width: parent.width - 10
-                            height: parent.height - 10
+
+                    Text {
+                        id: isBaned
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.right: parent.right
+                        visible: true
+                        anchors.rightMargin: 20
+                        font.bold: true
+                        font.pixelSize: 20
+                        text: model.ban ? "Baned" : "Unbaned"
+                        color: model.ban ? "red" : "green"
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            console.log("789")
+                            new_data.visible = true
+                            new_avatar.source = "file:///" + delegate.imgUrl
+                            nickname_fld.text = delegate.nickname
+                            email_lbl.text = delegate.email
+                            ban_check.checkState = delegate.isBan ? Qt.Checked : Qt.Unchecked
+
+                            root.imgUrl = delegate.imgUrl
+                            root.nickname = delegate.nickname
+                            root.email = delegate.email
+                            root.isBan = delegate.isBan
                         }
                     }
                 }
             }
 
-            Rectangle {
-                id: otherContactButtonGroup
-                color: "transparent"
-                width: parent.width
-                implicitHeight: 50
-                anchors.bottom: parent.bottom
-                Button {
-                    anchors {
-                        left: parent.left
-                        leftMargin: 75
-                    }
-
-                    text: qsTr("cancel")
-                    implicitWidth: 150
-                    onClicked: {
-                        animationOpacityBGConversationClose.start()
-                        animationScaleConversationClose.start()
-                    }
+            Button {
+                id: back_btn
+                anchors {
+                    horizontalCenter: otherContactListView.horizontalCenter
+                    leftMargin: 20
+                    bottom: parent.bottom
+                    bottomMargin: 20
                 }
-                Button {
-                    anchors {
-                        right: parent.right
-                        rightMargin: 75
-                    }
 
-                    text: qsTr("submit")
-                    implicitWidth: 150
-                    onClicked: {
-
-                        newConversationStackView.push(inputTitleandAvatar)
-                    }
+                text: qsTr("back")
+                implicitWidth: 150
+                onClicked: {
+                    back()
                 }
+            }
+        }
+    }
+    Rectangle {
+        id: new_data
+        visible: false
+        height: parent.height
+        width: parent.width - newConversationInitialItem.width
+        color: Material.background
+        anchors.right: parent.right
+        anchors.top: parent.top
+        Image {
+            id: new_avatar
+            width: parent.width / 2 - 45
+            height: width
+            source: "file:///" + applicationDirPath + "/../images/Default.jpg"
+            anchors {
+                //                horizontalCenter: parent.horizontalCenter
+                right: parent.right
+                rightMargin: 20
+                top: parent.top
+                topMargin: 20
+            }
+        }
+        Button {
+            id: drop_img_btn
+            anchors {
+                right: new_avatar.left
+                rightMargin: 20
+                top: parent.top
+                topMargin: 20
+            }
+            text: qsTr("drop images")
+
+            implicitWidth: 150
+            implicitHeight: 50
+            onClicked: {
+                new_avatar.source = "file:///" + applicationDirPath + "/../images/Default.jpg"
+            }
+        }
+
+        CheckBox {
+            id: ban_check
+            anchors {
+                right: new_avatar.left
+                rightMargin: 20
+                top: drop_img_btn.bottom
+                topMargin: 20
+            }
+            text: qsTr("Ban")
+
+            implicitWidth: 150
+            implicitHeight: 50
+        }
+
+        TextField {
+            id: nickname_fld
+            placeholderText: qsTr("nickname")
+            width: new_avatar.width
+            implicitHeight: 50
+            anchors {
+                top: new_avatar.bottom
+                topMargin: 20
+                right: parent.right
+                rightMargin: 20
+            }
+        }
+        Label {
+            id: email_lbl
+            text: qsTr("email")
+            anchors {
+                top: nickname_fld.bottom
+                topMargin: 20
+                right: parent.right
+                rightMargin: 20
+            }
+        }
+
+        Button {
+            id: submit_btn
+            anchors {
+                right: parent.right
+                rightMargin: 20
+                bottom: parent.bottom
+                bottomMargin: 20
+            }
+
+            text: qsTr("summit")
+
+            implicitWidth: 150
+            implicitHeight: 50
+            onClicked: {
+
             }
         }
     }

@@ -23,6 +23,11 @@ int ContactsModel::currentIndex() const
     return m_currentIndex;
 }
 
+QString ContactsModel::currentNickname() const
+{
+    return data(this->index(currentIndex()),Roles::NicknameRole).toString();
+}
+
 QString ContactsModel::currentDialog() const
 {
     qDebug() << currentIndex();

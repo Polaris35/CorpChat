@@ -15,6 +15,7 @@
 #include "include/imageserializer.h"
 #include "include/DocumentSerializer.h"
 #include "contactchoosemodel.h"
+#include "include/usersmodel.h"
 //#include "userdata.h"
 //#include "contactsmodel.h"
 
@@ -46,7 +47,13 @@ public:
     void start(QString hostIp, quint64 port);
 
 
-public slots:    
+    UsersModel *getUsersModel() const;
+    void setUsersModel(UsersModel *usersModel);
+
+public slots:
+    void updateUserData(QString nickname, QString email, QString image, bool ban);
+    void addUserToConversation(const QString& conversation_id);
+
     void registerNewUser(QString username,QString email, QString password, QString imgUrl);
     void authorize(QString email, QString password);
 
@@ -54,10 +61,14 @@ public slots:
     void sendImage(QString url);
     void sendDocument(QString url);
 
+    void getUserList();
     void getContactsList();
     void getConversationList();
     void getMessageHistory();
     void getMessageHistoryForGroupChat();
+
+    void loadUserList(const QStringList& json); // получаем список всех пользователей для админки
+
 
     void loadContactsList(const QStringList &json);
     void loadConversationList(const QStringList& json);
@@ -74,11 +85,15 @@ signals:
     void registerSuccess();
     void registerFailure();
 
+    void userBaned();
     void authSuccsess();
     void authFailure();
+    void authAdmin();
 
     void notifyMessage(QString sender);
 private:
+
+
     void addContact(const QString &contactData);
 	void newMessage(QString sender, QString destination, QString time,QString text);
     void newMessage(QString raw);
@@ -94,6 +109,7 @@ private:
     ContactsModel *m_contactsModel;
     MessagesModel *m_messagesModel;
     ContactsChooseModel *m_contactsChooseModel;
+    UsersModel *m_usersModel;
 
     QStringList m_toNotify;
 };
