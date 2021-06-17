@@ -96,24 +96,35 @@ ListView {
                 }
             }
 
-            TextField {
-                id: newContactInput
-
-                property var accent: Material.color(Material.Teal)
-                Material.accent: accent
-                Layout.fillWidth: true
+            Rectangle {
                 width: parent.width - 20
-                anchors {
-                    left: parent.left
-                    leftMargin: 10
-                    right: parent.right
-                    rightMargin: 10
-                }
-                placeholderText: qsTr("Никнейм")
-
-                Layout.minimumWidth: list.btnSize * 3
-                Layout.preferredHeight: list.btnSize
+                height: 30
+                color: Material.background
             }
+
+            //            TextField {
+            //                id: newContactInput
+
+            //                property var accent: Material.color(Material.Teal)
+            //                Material.accent: accent
+            //                visible: false
+            //                Layout.fillWidth: true
+            //                width: parent.width - 20
+            //                anchors {
+            //                    left: parent.left
+            //                    leftMargin: 10
+            //                    right: parent.right
+            //                    rightMargin: 10
+            //                }
+            //                onTextChanged: {
+            //                    contactsModel.setFilterFixedString(newContactInput.text)
+            //                }
+
+            //                placeholderText: qsTr("Никнейм")
+
+            //                Layout.minimumWidth: list.btnSize * 3
+            //                Layout.preferredHeight: list.btnSize
+            //            }
         }
     }
 
@@ -152,8 +163,8 @@ ListView {
                 id: contactsDelegate
                 width: list.width
                 //height: 40
-                avatarSource: model.avatar
-                username: model.nickname
+                //                avatarSource: model.avatar
+                //                username: model.nickname
                 z: 3
                 onClick: {
                     list.currentIndex = index
@@ -181,8 +192,6 @@ ListView {
                 id: groupChatDelegate
                 width: list.width
                 //height: 40
-                avatarSource: model.avatar
-                title: model.nickname
                 z: 3
                 onClick: {
                     list.currentIndex = index

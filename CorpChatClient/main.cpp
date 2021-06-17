@@ -42,6 +42,10 @@ int main(int argc, char *argv[])
     contactsModel.setList(&contactsList);
     client.setContactsModel(&contactsModel);
 
+//    QSortFilterProxyModel contactProxyModel;
+//    contactProxyModel.setSourceModel(&contactsModel);
+//    contactProxyModel.setSortRole(ContactsChooseModel::NicknameRole);
+
     MessagesList messagesList;
     MessagesModel messagesModel;
     messagesModel.setList(&messagesList);

@@ -540,6 +540,20 @@ QStringList DBFacade::getConversationUsers(const int &id)
 bool DBFacade::addUserToConversation(const int &conversation_id, const int &user_id)
 {
     QSqlQuery query(*m_db);
+    query.prepare("SELECT COUNT(*) FROM participants WHERE id_conversation = :conversation_id "
+                  "AND id_useres = :user_id");
+    query.bindValue(":conversation_id",conversation_id);
+    query.bindValue(":user_id",user_id);
+    if(!query.exec()){
+        qDebug() << Q_FUNC_INFO << " Can't add user to conversation, conversation_id = " << conversation_id
+                 << " user_id = " << user_id;
+        return false;
+    }
+    query.next();
+    if(query.value(0).toInt() != 0)
+        return true;
+    query.finish();
+
     query.prepare("INSERT INTO participants (id_conversation,id_useres) VALUES(:conversation,:user)");
     query.bindValue(":conversation",conversation_id);
     query.bindValue(":user",user_id);

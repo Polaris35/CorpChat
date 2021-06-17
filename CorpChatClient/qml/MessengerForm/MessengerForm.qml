@@ -22,6 +22,215 @@ Rectangle {
         var re = /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/
         return re.test(String(email).toLowerCase())
     }
+
+    Rectangle {
+        //begin addToConversationClickForm
+        id: addToConversationClickForm
+        visible: false
+        opacity: 1
+        color: Qt.rgba(0, 0, 0, 0.75)
+        anchors.fill: parent
+        z: 2
+        layer.enabled: true
+
+        Rectangle {
+            id: addToConversation
+            z: 3
+            opacity: 1
+            implicitWidth: 500
+            implicitHeight: 700
+            anchors.centerIn: parent
+            color: Material.backgroundColor
+            Layout.maximumHeight: 700
+
+            Rectangle {
+                z: 4
+                anchors.fill: parent
+                color: Material.background
+                TextField {
+                    id: searchField
+                    anchors {
+                        //left: parent.left
+                        top: parent.top
+                        //leftMargin: 10
+                        topMargin: 10
+                        horizontalCenter: parent.horizontalCenter
+                    }
+                    width: 300
+                    placeholderText: "nickname"
+                }
+                ToolButton {
+                    width: 45
+                    height: 45
+                    anchors.left: searchField.right
+                    anchors.leftMargin: 5
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    contentItem: Image {
+                        source: "qrc:/qml/icons/iconfinder_314807_search_icon"
+                    }
+                    onClicked: {
+
+                        contactChooseModel.setFilterFixedString(
+                                    searchField.text)
+                    }
+                }
+
+                ListView {
+                    id: otherContactListView
+                    width: parent.width
+                    anchors.top: searchField.bottom
+                    anchors.bottom: otherContactButtonGroup.top
+                    anchors.topMargin: 10
+                    anchors.bottomMargin: 10
+                    spacing: 3
+                    model: contactChooseModel
+                    delegate: Rectangle {
+                        width: otherContactListView.width
+                        implicitHeight: 80
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                console.log("789")
+                                console.log(" choose mode = " + model.isChoose)
+                                if (model.isChoose) {
+                                    isChecked.visible = false
+                                    model.isChoose = false
+                                } else {
+                                    isChecked.visible = true
+                                    model.isChoose = true
+                                }
+                            }
+                        }
+
+                        //                                border.width: 1
+                        //                                border.color: Material.accent
+                        color: Material.background
+                        Image {
+                            id: avatar_add
+                            anchors {
+                                verticalCenter: parent.verticalCenter
+                                left: parent.left
+                                leftMargin: 30
+                            }
+                            source: "file:///" + model.avatar
+                            height: 50
+                            width: 50
+                        }
+                        Label {
+                            anchors.bottom: parent.verticalCenter
+                            anchors.bottomMargin: 5
+                            anchors.left: avatar_add.right
+                            anchors.leftMargin: 10
+                            text: model.nickname
+                        }
+                        Label {
+                            anchors.top: parent.verticalCenter
+                            anchors.topMargin: 5
+                            anchors.left: avatar_add.right
+                            anchors.leftMargin: 10
+                            text: model.email
+                            opacity: 0.4
+                        }
+                        Rectangle {
+                            id: isChecked
+                            visible: false
+                            anchors {
+                                verticalCenter: parent.verticalCenter
+                                left: avatar_add.right
+                                leftMargin: 330
+                                //rightMargin: 30
+                            }
+                            color: "lime"
+                            radius: width / 2
+                            height: 40
+                            width: 40
+                            Image {
+                                source: "qrc:/qml/icons/check-mark"
+                                anchors.centerIn: parent
+                                width: parent.width - 10
+                                height: parent.height - 10
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: otherContactButtonGroup
+                    color: "transparent"
+                    width: parent.width
+                    implicitHeight: 50
+                    anchors.bottom: parent.bottom
+                    Button {
+                        anchors {
+                            left: parent.left
+                            leftMargin: 75
+                        }
+
+                        text: qsTr("cancel")
+                        implicitWidth: 150
+                        onClicked: {
+
+                            animationOpacityBGAddClose.start()
+                            animationScaleAddClose.start()
+                        }
+                    }
+                    Button {
+                        anchors {
+                            right: parent.right
+                            rightMargin: 75
+                        }
+
+                        text: qsTr("submit")
+                        implicitWidth: 150
+                        onClicked: {
+                            client.addUserToConversation(
+                                        contactsModel.currentDialog())
+                        }
+                    }
+                }
+            }
+        }
+
+        ColorAnimation {
+            id: animationOpacityBGAddOpen
+            target: addToConversationClickForm
+            property: "color"
+            from: Qt.rgba(0, 0, 0, 0.3)
+            to: Qt.rgba(0, 0, 0, 0.75)
+            duration: 100
+        }
+
+        ColorAnimation {
+            id: animationOpacityBGAddClose
+            target: addToConversationClickForm
+            property: "color"
+            from: Qt.rgba(0, 0, 0, 0.75)
+            to: Qt.rgba(0, 0, 0, 0.3)
+            duration: 99
+        }
+
+        ScaleAnimator {
+            id: animationScaleAddOpen
+            target: addToConversation
+            from: 0.4
+            to: 1
+            duration: 100
+        }
+
+        ScaleAnimator {
+            id: animationScaleAddClose
+            target: addToConversation
+            from: 1
+            to: 0.4
+            duration: 100
+            onFinished: {
+                addToConversationClickForm.visible = false
+            }
+        }
+    } // end new addToConversationClickForm
+
     height: GlobalSettings.defaultFormHeight
     width: GlobalSettings.defaultFormWidth
     signal menuClick
@@ -132,7 +341,6 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.topMargin: 10
-                //Layout.alignment: Qt.AlignTop | Qt.AlignHCenter
                 font.pointSize: 28
                 Connections {
                     target: client
@@ -148,18 +356,16 @@ Rectangle {
                         menuClick()
                     }
                 }
-
-                //Layout.topMargin: 10
             }
 
             ContactsView {
                 id: contactsView
-                //model: contactsModel
+
                 anchors.fill: parent
                 anchors.top: logo_text.bottom
                 anchors.topMargin: logo_text.height
                 onNewDialog: {
-                    //dialog.source = source
+
                     newDialogClickForm.visible = true
                     animationScaleDialogOpen.start()
                     animationOpacityBGDialogOpen.start()
@@ -174,32 +380,36 @@ Rectangle {
                     header.nickname = contactsModel.currentNickname()
                     header.email = contactsModel.currentDialog()
                     header.imgUrl = contactsModel.currentAvatar()
-                    header.type = type
+                    header.type = contactsModel.currentType()
                 }
             }
         }
         Rectangle {
             id: chatField
-            implicitWidth: 50
+            implicitWidth: 970
+            implicitHeight: 80
             color: Material.backgroundColor
             Rectangle {
                 id: header
                 anchors.top: parent.top
-                visible: true
+                anchors.right: parent.right
+                anchors.left: parent.left
+                visible: false
                 property string nickname
                 property string email
                 property string imgUrl
                 property string type
                 border.color: "white"
                 border.width: 1
+                implicitWidth: 970
                 implicitHeight: 80
-                width: parent.width
                 color: Material.background
                 MouseArea {
                     anchors.fill: parent
-
+                    z: 5
                     onClicked: {
                         console.log("add to conversation")
+                        addToConversationClickForm.visible = true
                         animationOpacityBGAddOpen.start()
                         animationScaleAddOpen.start()
                     }
@@ -228,7 +438,7 @@ Rectangle {
                     anchors.topMargin: 5
                     anchors.left: avatar.right
                     anchors.leftMargin: 10
-                    text: header.email
+                    text: type == "single" ? "" : header.email
                     opacity: 0.4
                 }
             }
@@ -574,11 +784,8 @@ Rectangle {
                                 source: "qrc:/qml/icons/iconfinder_314807_search_icon"
                             }
                             onClicked: {
-                                if (searchField.text !== "") {
-                                    contactChooseModel.setFilterFixedString(
-                                                searchField.text)
-                                } else
-                                    contactChooseModel.invalidate()
+                                contactChooseModel.setFilterFixedString(
+                                            searchField.text)
                             }
                         }
 
@@ -739,214 +946,4 @@ Rectangle {
             }
         }
     } // end new Conversation
-
-    Rectangle {
-        //begin addToConversationClickForm
-        id: addToConversationClickForm
-        visible: false
-        opacity: 1
-        color: Qt.rgba(0, 0, 0, 0.75)
-        anchors.fill: parent
-        z: 2
-        layer.enabled: true
-
-        Rectangle {
-            id: addToConversation
-            z: 3
-            opacity: 1
-            implicitWidth: 500
-            implicitHeight: 700
-            anchors.centerIn: parent
-            color: Material.backgroundColor
-            Layout.maximumHeight: 700
-
-            Rectangle {
-                z: 4
-                anchors.fill: parent
-                color: Material.background
-                TextField {
-                    id: searchField
-                    anchors {
-                        //left: parent.left
-                        top: parent.top
-                        //leftMargin: 10
-                        topMargin: 10
-                        horizontalCenter: parent.horizontalCenter
-                    }
-                    width: 300
-                    placeholderText: "nickname"
-                }
-                ToolButton {
-                    width: 45
-                    height: 45
-                    anchors.left: searchField.right
-                    anchors.leftMargin: 5
-                    anchors.top: parent.top
-                    anchors.topMargin: 10
-                    contentItem: Image {
-                        source: "qrc:/qml/icons/iconfinder_314807_search_icon"
-                    }
-                    onClicked: {
-                        if (searchField.text !== "") {
-                            contactChooseModel.setFilterFixedString(
-                                        searchField.text)
-                        } else
-                            contactChooseModel.invalidate()
-                    }
-                }
-
-                ListView {
-                    id: otherContactListView
-                    width: parent.width
-                    anchors.top: searchField.bottom
-                    anchors.bottom: otherContactButtonGroup.top
-                    anchors.topMargin: 10
-                    anchors.bottomMargin: 10
-                    spacing: 3
-                    model: contactChooseModel
-                    delegate: Rectangle {
-                        width: otherContactListView.width
-                        implicitHeight: 80
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                console.log("789")
-                                console.log(" choose mode = " + model.isChoose)
-                                if (model.isChoose) {
-                                    isChecked.visible = false
-                                    model.isChoose = false
-                                } else {
-                                    isChecked.visible = true
-                                    model.isChoose = true
-                                }
-                            }
-                        }
-
-                        //                                border.width: 1
-                        //                                border.color: Material.accent
-                        color: Material.background
-                        Image {
-                            id: avatar_add
-                            anchors {
-                                verticalCenter: parent.verticalCenter
-                                left: parent.left
-                                leftMargin: 30
-                            }
-                            source: "file:///" + model.avatar
-                            height: 50
-                            width: 50
-                        }
-                        Label {
-                            anchors.bottom: parent.verticalCenter
-                            anchors.bottomMargin: 5
-                            anchors.left: avatar_add.right
-                            anchors.leftMargin: 10
-                            text: model.nickname
-                        }
-                        Label {
-                            anchors.top: parent.verticalCenter
-                            anchors.topMargin: 5
-                            anchors.left: avatar_add.right
-                            anchors.leftMargin: 10
-                            text: model.email
-                            opacity: 0.4
-                        }
-                        Rectangle {
-                            id: isChecked
-                            visible: false
-                            anchors {
-                                verticalCenter: parent.verticalCenter
-                                left: avatar_add.right
-                                leftMargin: 330
-                                //rightMargin: 30
-                            }
-                            color: "lime"
-                            radius: width / 2
-                            height: 40
-                            width: 40
-                            Image {
-                                source: "qrc:/qml/icons/check-mark"
-                                anchors.centerIn: parent
-                                width: parent.width - 10
-                                height: parent.height - 10
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id: otherContactButtonGroup
-                    color: "transparent"
-                    width: parent.width
-                    implicitHeight: 50
-                    anchors.bottom: parent.bottom
-                    Button {
-                        anchors {
-                            left: parent.left
-                            leftMargin: 75
-                        }
-
-                        text: qsTr("cancel")
-                        implicitWidth: 150
-                        onClicked: {
-
-                            animationOpacityBGAddClose.start()
-                            animationScaleAddClose.start()
-                        }
-                    }
-                    Button {
-                        anchors {
-                            right: parent.right
-                            rightMargin: 75
-                        }
-
-                        text: qsTr("submit")
-                        implicitWidth: 150
-                        onClicked: {
-                            client.addUserToConversation(
-                                        contactChooseModel.currentDialog())
-                        }
-                    }
-                }
-            }
-        }
-
-        ColorAnimation {
-            id: animationOpacityBGAddOpen
-            target: addToConversationClickForm
-            property: "color"
-            from: Qt.rgba(0, 0, 0, 0.3)
-            to: Qt.rgba(0, 0, 0, 0.75)
-            duration: 100
-        }
-
-        ColorAnimation {
-            id: animationOpacityBGAddClose
-            target: addToConversationClickForm
-            property: "color"
-            from: Qt.rgba(0, 0, 0, 0.75)
-            to: Qt.rgba(0, 0, 0, 0.3)
-            duration: 99
-        }
-
-        ScaleAnimator {
-            id: animationScaleAddOpen
-            target: addToConversation
-            from: 0.4
-            to: 1
-            duration: 100
-        }
-
-        ScaleAnimator {
-            id: animationScaleAddClose
-            target: addToConversation
-            from: 1
-            to: 0.4
-            duration: 100
-            onFinished: {
-                addToConversationClickForm.visible = false
-            }
-        }
-    } // end new addToConversationClickForm
 }
